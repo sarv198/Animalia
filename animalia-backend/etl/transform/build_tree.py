@@ -16,10 +16,10 @@ def run(reconciled: pd.DataFrame) -> pd.DataFrame:
         "scientific_name",
         "rank",
         "parent_name",
-        "col_id",
+        "col_taxon_id",
         "ott_id",
-        "gbif_id",
-        "iucn_status",
+        "gbif_taxon_id",
+        "iucn_category",
     ]
     for c in cols:
         if c not in reconciled.columns:

@@ -1,21 +1,10 @@
 services:
   db:
-    image: postgres:16-alpine
-    container_name: tree-of-life-db
-    restart: unless-stopped
+    image: postgres:16
     environment:
       POSTGRES_USER: tol
       POSTGRES_PASSWORD: tol
-      POSTGRES_DB: tree_of_life
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tol -d tree_of_life"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
+      POSTGRES_DB: treeoflife
+    ports: ["5433:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+volumes: { pgdata: {} }

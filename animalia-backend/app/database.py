@@ -1,18 +1,15 @@
-"""SQLAlchemy engine and session factory."""
-
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
-from app.config import settings
+from app.config import DATABASE_URL
+from app.models import Base  # re-export: Alembic + scripts import from here or models
 
-engine = create_engine(settings.database_url, pool_pre_ping=True)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_engine(DATABASE_URL, future=True)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
-
-class Base(DeclarativeBase):
-    pass
+__all__ = ["Base", "SessionLocal", "engine", "get_db"]
 
 
 def get_db() -> Generator[Session, None, None]:

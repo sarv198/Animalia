@@ -21,6 +21,6 @@ def run(normalized: pd.DataFrame, *, iucn_raw: Path | None = None) -> pd.DataFra
         iucn_raw,
     )
     out = normalized.copy()
-    if "iucn_status" not in out.columns:
-        out["iucn_status"] = None
+    if "iucn_category" not in out.columns:
+        out["iucn_category"] = None
     return out

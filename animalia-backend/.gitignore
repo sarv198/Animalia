@@ -23,12 +23,9 @@ build/
 .DS_Store
 Thumbs.db
 
-# Data artifacts (keep folder structure via .gitkeep)
-data/raw/**
-!data/raw/**/.gitkeep
-data/processed/**
-!data/processed/**/.gitkeep
-!data/processed/.gitkeep
+# Data artifacts — never push raw/processed downloads
+data/raw/
+data/processed/
 
 # Test / coverage
 .pytest_cache/

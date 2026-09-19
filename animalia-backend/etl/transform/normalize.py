@@ -50,8 +50,8 @@ def run(*raw_paths: Path) -> pd.DataFrame:
             "scientific_name",
             "rank",
             "parent_name",
-            "col_id",
+            "col_taxon_id",
             "ott_id",
-            "gbif_id",
+            "gbif_taxon_id",
         ]
     )

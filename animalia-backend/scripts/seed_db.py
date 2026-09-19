@@ -37,6 +37,7 @@ def seed() -> None:
                 scientific_name=name,
                 rank=rank,
                 parent_id=parent_id,
+                taxonomic_source="seed",
             )
             db.add(taxon)
             db.flush()
@@ -45,6 +46,7 @@ def seed() -> None:
                 db.add(
                     Species(
                         taxon_id=taxon.id,
+                        scientific_name=name,
                         common_name=common,
                     )
                 )

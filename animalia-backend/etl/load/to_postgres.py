@@ -41,9 +41,8 @@ def load(parquet_path: Path) -> None:
             taxon = Taxon(
                 scientific_name=str(name),
                 rank=str(row.get("rank") or "species"),
-                col_id=_opt_str(row.get("col_id")),
-                ott_id=_opt_str(row.get("ott_id")),
-                gbif_id=_opt_str(row.get("gbif_id")),
+                col_taxon_id=_opt_str(row.get("col_taxon_id") or row.get("col_id")),
+                taxonomic_source=_opt_str(row.get("taxonomic_source")),
             )
             db.add(taxon)
             db.flush()
@@ -51,7 +50,17 @@ def load(parquet_path: Path) -> None:
                 db.add(
                     Species(
                         taxon_id=taxon.id,
-                        iucn_status=_opt_str(row.get("iucn_status")),
+                        scientific_name=str(name),
+                        col_taxon_id=_opt_str(
+                            row.get("col_taxon_id") or row.get("col_id")
+                        ),
+                        gbif_taxon_id=_opt_int(
+                            row.get("gbif_taxon_id") or row.get("gbif_id")
+                        ),
+                        ott_id=_opt_int(row.get("ott_id")),
+                        iucn_category=_opt_str(
+                            row.get("iucn_category") or row.get("iucn_status")
+                        ),
                     )
                 )
         db.commit()
@@ -67,3 +76,9 @@ def _opt_str(value) -> str | None:
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return None
     return str(value)
+
+
+def _opt_int(value) -> int | None:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    return int(value)
