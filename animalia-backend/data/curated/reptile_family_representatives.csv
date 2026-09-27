@@ -1,0 +1,87 @@
+clade_group,family,species,common_name,notes
+Amphisbaenia,Amphisbaenidae,Amphisbaena alba,White worm lizard,
+Amphisbaenia,Bipedidae,Bipes biporus,Mexican mole lizard,
+Amphisbaenia,Blanidae,Blanus cinereus,Iberian worm lizard,
+Amphisbaenia,Cadeidae,Cadea blanoides,Spotted amphisbaena,Endemic to Cuba; verify current family validity (recent nomenclature dispute)
+Amphisbaenia,Rhineuridae,Rhineura floridana,Florida worm lizard,Monotypic family
+Amphisbaenia,Trogonophidae,Trogonophis wiegmanni,Checkerboard worm lizard,
+Gekkota,Carphodactylidae,Carphodactylus laevis,Chameleon gecko,
+Gekkota,Dibamidae,Dibamus novaeguineae,New Guinea blind skink,
+Gekkota,Diplodactylidae,Diplodactylus vittatus,Wood gecko,
+Gekkota,Eublepharidae,Eublepharis macularius,Leopard gecko,
+Gekkota,Gekkonidae,Gekko gecko,Tokay gecko,
+Gekkota,Phyllodactylidae,Phyllodactylus europaeus,European leaf-toed gecko,
+Gekkota,Pygopodidae,Lialis burtonis,Burton's legless lizard,
+Gekkota,Sphaerodactylidae,Sphaerodactylus notatus,Reef gecko,
+Iguania,Agamidae,Pogona vitticeps,Central bearded dragon,
+Iguania,Chamaeleonidae,Chamaeleo calyptratus,Veiled chameleon,
+Iguania,Corytophanidae,Basiliscus basiliscus,Common basilisk,
+Iguania,Crotaphytidae,Crotaphytus collaris,Eastern collared lizard,
+Iguania,Dactyloidae,Anolis carolinensis,Green anole,
+Iguania,Hoplocercidae,Hoplocercus spinosus,Amazon spinytail lizard,
+Iguania,Iguanidae,Iguana iguana,Green iguana,
+Iguania,Leiocephalidae,Leiocephalus carinatus,Northern curly-tailed lizard,
+Iguania,Leiosauridae,Leiosaurus catamarcensis,,
+Iguania,Liolaemidae,Liolaemus tenuis,,
+Iguania,Opluridae,Oplurus cuvieri,Madagascar collared iguana,
+Iguania,Phrynosomatidae,Phrynosoma cornutum,Texas horned lizard,
+Iguania,Polychrotidae,Polychrus marmoratus,Common polychrus,Family placement contested; often merged into Dactyloidae in some taxonomies
+Iguania,Tropiduridae,Tropidurus torquatus,,
+Lacertoidea,Alopoglossidae,Alopoglossus angulatus,,
+Lacertoidea,Gymnophthalmidae,Gymnophthalmus speciosus,Golden spectacled tegu,
+Lacertoidea,Lacertidae,Lacerta agilis,Sand lizard,
+Lacertoidea,Teiidae,Ameiva ameiva,Giant ameiva,
+Anguimorpha,Anguidae,Anguis fragilis,Slow worm,
+Anguimorpha,Anniellidae,Anniella pulchra,California legless lizard,
+Anguimorpha,Diploglossidae,Diploglossus monotropis,Neotropical galliwasp,
+Anguimorpha,Helodermatidae,Heloderma suspectum,Gila monster,
+Anguimorpha,Lanthanotidae,Lanthanotus borneensis,Earless monitor lizard,Monotypic family
+Anguimorpha,Shinisauridae,Shinisaurus crocodilurus,Chinese crocodile lizard,Monotypic family
+Anguimorpha,Varanidae,Varanus komodoensis,Komodo dragon,
+Anguimorpha,Xenosauridae,Xenosaurus grandis,,
+Scincomorpha,Cordylidae,Cordylus cataphractus,Armadillo girdled lizard,
+Scincomorpha,Gerrhosauridae,Gerrhosaurus major,Great plated lizard,
+Scincomorpha,Scincidae,Tiliqua scincoides,Blue-tongued skink,
+Scincomorpha,Xantusiidae,Xantusia vigilis,Desert night lizard,
+Alethinophidia (snakes),Acrochordidae,Acrochordus javanicus,Javan file snake,
+Alethinophidia (snakes),Aniliidae,Anilius scytale,South American pipe snake,Monotypic family
+Alethinophidia (snakes),Anomochilidae,Anomochilus leonardi,Leonard's pipe snake,Very small family (3 species total)
+Alethinophidia (snakes),Atractaspididae,Atractaspis bibronii,Bibron's stiletto snake,
+Alethinophidia (snakes),Boidae,Boa constrictor,Boa constrictor,
+Alethinophidia (snakes),Colubridae,Pantherophis guttatus,Corn snake,
+Alethinophidia (snakes),Cylindrophiidae,Cylindrophis ruffus,Red-tailed pipe snake,
+Alethinophidia (snakes),Elapidae,Naja naja,Indian cobra,
+Alethinophidia (snakes),Homalopsidae,Homalopsis buccata,Puff-faced water snake,
+Alethinophidia (snakes),Lamprophiidae,Lamprophis fuliginosus,Brown house snake,
+Alethinophidia (snakes),Loxocemidae,Loxocemus bicolor,Mexican burrowing python,Monotypic family
+Alethinophidia (snakes),Micrelapidae,Micrelaps muelleri,Mueller's two-headed snake,"Very recently split family (2023), only 3 species; some databases still list genus under Lamprophiidae"
+Alethinophidia (snakes),Pareidae,Pareas carinatus,Keeled slug snake,
+Alethinophidia (snakes),Pythonidae,Python bivittatus,Burmese python,
+Alethinophidia (snakes),Tropidophiidae,Tropidophis melanurus,Cuban wood snake,
+Alethinophidia (snakes),Uropeltidae,Uropeltis melanogaster,,
+Alethinophidia (snakes),Viperidae,Crotalus atrox,Western diamondback rattlesnake,
+Alethinophidia (snakes),Xenodermidae,Xenodermus javanicus,Dragon snake,
+Alethinophidia (snakes),Xenopeltidae,Xenopeltis unicolor,Sunbeam snake,
+Scolecophidia (blindsnakes),Anomalepidae,Liotyphlops albirostris,,
+Scolecophidia (blindsnakes),Gerrhopilidae,Gerrhopilus mirus,,"Family only split from Typhlopidae in 2010 - double-check current accepted species name"
+Scolecophidia (blindsnakes),Leptotyphlopidae,Leptotyphlops carlae,Barbados threadsnake,
+Scolecophidia (blindsnakes),Typhlopidae,Indotyphlops braminus,Brahminy blindsnake,
+Scolecophidia (blindsnakes),Xenotyphlopidae,Xenotyphlops grandidieri,Malagasy blind snake,Monotypic-ish family (2 species)
+Testudines,Carettochelyidae,Carettochelys insculpta,Pig-nosed turtle,Monotypic family
+Testudines,Trionychidae,Pelodiscus sinensis,Chinese softshell turtle,
+Testudines,Cheloniidae,Chelonia mydas,Green sea turtle,
+Testudines,Dermochelyidae,Dermochelys coriacea,Leatherback sea turtle,Monotypic family
+Testudines,Chelydridae,Chelydra serpentina,Common snapping turtle,
+Testudines,Emydidae,Trachemys scripta,Pond slider,
+Testudines,Geoemydidae,Cuora amboinensis,Southeast Asian box turtle,
+Testudines,Testudinidae,Chelonoidis niger,Galapagos tortoise,
+Testudines,Platysternidae,Platysternon megacephalum,Big-headed turtle,Monotypic family
+Testudines,Kinosternidae,Kinosternon subrubrum,Eastern mud turtle,
+Testudines,Chelidae,Chelodina longicollis,Eastern snake-necked turtle,
+Testudines,Pelomedusidae,Pelomedusa subrufa,African helmeted turtle,
+Testudines,Podocnemididae,Podocnemis expansa,South American river turtle,
+Testudines,Dermatemydidae,Dermatemys mawii,Central American river turtle,Monotypic family
+Crocodylia,Alligatoridae,Alligator mississippiensis,American alligator,
+Crocodylia,Crocodylidae,Crocodylus niloticus,Nile crocodile,
+Crocodylia,Gavialidae,Gavialis gangeticus,Gharial,
+Rhynchocephalia,Sphenodontidae,Sphenodon punctatus,Tuatara,Monotypic family/order - only living non-squamate lepidosaur; add if you want full order-level breadth
