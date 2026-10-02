@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
-from app.routers import tree
+from app.routers import species, tree
 
 app = FastAPI(title="animalia-backend")
 
@@ -33,6 +33,7 @@ def get_db() -> Generator[Session, None, None]:
 
 
 app.include_router(tree.router)
+app.include_router(species.router)
 
 
 @app.get("/api/health")

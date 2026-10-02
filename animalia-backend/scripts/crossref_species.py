@@ -22,6 +22,7 @@ import argparse
 import csv
 import os
 import time
+from pathlib import Path
 
 import requests
 
@@ -32,6 +33,17 @@ OPENTREE_MATCH_URL = "https://api.opentreeoflife.org/v3/tnrs/match_names"
 
 REQUEST_TIMEOUT = 15
 SLEEP_BETWEEN_CALLS = 0.3  # be polite to free public APIs
+
+
+def resolve_input_path(path):
+    """Use the given path, or data/curated/<filename> if that is where it lives."""
+    candidate = Path(path)
+    if candidate.exists():
+        return candidate
+    curated = Path("data/curated") / candidate.name
+    if curated.exists():
+        return curated
+    return candidate
 
 
 def load_species_list(path):
@@ -65,11 +77,25 @@ def match_gbif(species_name):
         return {"gbif_error": str(e)}
 
 
+def binomial_name(scientific_name):
+    """Genus + species epithet, without an author or year suffix."""
+    if not scientific_name:
+        return ""
+    without_authorship = scientific_name.split("(")[0].strip()
+    parts = without_authorship.split()
+    if len(parts) >= 2:
+        return f"{parts[0]} {parts[1]}".casefold()
+    return without_authorship.casefold()
+
+
 def match_col(species_name):
     """
     Search Catalogue of Life (via ChecklistBank) for the species and return
     the accepted taxon id. '3LR' is ChecklistBank's alias for whatever the
     current CoL annual release is, so you don't have to hardcode a version.
+
+    The top hit is accepted only when its binomial matches the queried name.
+    Authorship (author and year) is ignored in that comparison.
     """
     try:
         resp = requests.get(
@@ -89,11 +115,19 @@ def match_col(species_name):
             return {"col_taxon_id": None, "col_match": "NO_MATCH"}
         top = results[0]
         usage = top.get("usage", top)  # response shape varies slightly by version
+        name_obj = usage.get("name")
+        matched_name = (
+            name_obj.get("scientificName") if isinstance(name_obj, dict) else None
+        )
+        if binomial_name(matched_name) != binomial_name(species_name):
+            return {
+                "col_taxon_id": None,
+                "col_match": "NAME_MISMATCH",
+                "col_matched_name": matched_name,
+            }
         return {
             "col_taxon_id": usage.get("id"),
-            "col_matched_name": usage.get("name", {}).get("scientificName")
-            if isinstance(usage.get("name"), dict)
-            else None,
+            "col_matched_name": matched_name,
             "col_match": "OK",
         }
     except requests.RequestException as e:
@@ -178,6 +212,8 @@ def flag_for_review(row):
     reasons = []
     if row.get("gbif_match_type") not in ("EXACT",):
         reasons.append("gbif_not_exact")
+    if row.get("gbif_status") == "SYNONYM":
+        reasons.append("gbif_synonym")
     if row.get("col_match") != "OK":
         reasons.append("col_no_match")
     if not row.get("ott_id"):
@@ -199,7 +235,8 @@ def main():
     )
     args = parser.parse_args()
 
-    species_rows = load_species_list(args.input_path)
+    input_path = resolve_input_path(args.input_path)
+    species_rows = load_species_list(input_path)
     iucn_token = os.environ.get("IUCN_API_TOKEN", "")
     if not iucn_token:
         print("Warning: IUCN_API_TOKEN not set - conservation status will be blank.")
