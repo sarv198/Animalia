@@ -12,14 +12,16 @@ Design notes:
   - `species` = the leaf entities that carry enrichment (IDs, conservation,
               occurrence counts). External IDs are the "glue" - never join on
               scientific names, which change.
-  - `phylogeny_edges` = evolutionary relationships, kept SEPARATE from taxonomy
-              because the two are not the same thing (see caveat at bottom).
+  - `phylo_nodes` + `phylogeny_edges` = evolutionary relationships, kept
+              SEPARATE from taxonomy because the two are not the same thing.
+              Nodes include unnamed common ancestors and extinct groups, so
+              edges point at nodes, not at species.
   - `sources` = provenance, so every value can be traced to a dataset version.
 """
 
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Text, false, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -75,22 +77,92 @@ class Species(Base):
     #     populate this live at request time or from Wikidata P141 instead) ---
     iucn_category: Mapped[str | None] = mapped_column(String(10))  # LC/NT/VU/EN/CR...
     iucn_assessment_year: Mapped[int | None] = mapped_column()
+    iucn_source: Mapped[str | None] = mapped_column(Text)  # e.g. "Wikipedia infobox (IUCN3.1) ..."
+    wikipedia_url: Mapped[str | None] = mapped_column(Text)
 
     occurrence_count: Mapped[int | None] = mapped_column()
 
     taxon = relationship("Taxon")
+    media = relationship(
+        "SpeciesMedia", order_by="SpeciesMedia.position", cascade="all, delete-orphan"
+    )
+
+
+class SpeciesMedia(Base):
+    """An openly licensed image of a species, linked (not copied) with its credit."""
+    __tablename__ = "species_media"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    species_id: Mapped[int] = mapped_column(ForeignKey("species.id"), index=True)
+    position: Mapped[int] = mapped_column()  # display order
+    source: Mapped[str] = mapped_column(String(50))  # Wikimedia Commons | GBIF
+    image_url: Mapped[str] = mapped_column(Text)
+    thumbnail_url: Mapped[str | None] = mapped_column(Text)
+    page_url: Mapped[str | None] = mapped_column(Text)  # where the credit can be checked
+    licence: Mapped[str] = mapped_column(String(50))
+    licence_url: Mapped[str | None] = mapped_column(Text)
+    creator: Mapped[str | None] = mapped_column(Text)
+
+
+class PhyloNode(Base):
+    """A node of the phylogeny: a family tip, a collapsed group, or an ancestor.
+
+    Family tips carry the representative species and how confident we are that
+    the species stands for its whole family (`placement_status`). Collapsed
+    groups (pterosaurs, birds, ...) are drawn as one tip without families.
+    """
+    __tablename__ = "phylo_nodes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_id: Mapped[int | None] = mapped_column(ForeignKey("sources.id"))
+    external_id: Mapped[str | None] = mapped_column(String(100), index=True)  # ott123 / mrcaott1ott2
+    label: Mapped[str | None] = mapped_column(String(255))
+    is_tip: Mapped[bool] = mapped_column(Boolean, server_default=false())
+
+    # --- family tips only ---
+    species_id: Mapped[int | None] = mapped_column(ForeignKey("species.id"), index=True)
+    family_taxon_id: Mapped[int | None] = mapped_column(ForeignKey("taxa.id"), index=True)
+    family_ott_id: Mapped[int | None] = mapped_column()
+    placement_status: Mapped[str | None] = mapped_column(String(20))  # confirmed | flagged | unknown
+
+    # --- curated annotations ---
+    extinct: Mapped[bool] = mapped_column(Boolean, server_default=false())
+    collapsed_group: Mapped[bool] = mapped_column(Boolean, server_default=false())
+    placement_uncertain: Mapped[bool] = mapped_column(Boolean, server_default=false())
+    anapsid_skull: Mapped[bool] = mapped_column(Boolean, server_default=false())
+    note: Mapped[str | None] = mapped_column(Text)
+    citation: Mapped[str | None] = mapped_column(Text)
+
+    # --- divergence times (etl/transform/date_phylogeny.py) ---
+    # age_ma: when this node lived, in millions of years ago. Tips: 0 if living,
+    # last fossil if extinct. age_source says where it came from: present |
+    # last appearance | fossil minimum | TimeTree 5 | interpolated.
+    age_ma: Mapped[float | None] = mapped_column()
+    age_ci_low: Mapped[float | None] = mapped_column()
+    age_ci_high: Mapped[float | None] = mapped_column()
+    age_source: Mapped[str | None] = mapped_column(String(100))
+    age_citation: Mapped[str | None] = mapped_column(Text)
+    age_study_count: Mapped[int | None] = mapped_column()  # TimeTree studies behind the estimate
+    age_adjusted: Mapped[bool] = mapped_column(Boolean, server_default=false())
+    age_unadjusted_ma: Mapped[float | None] = mapped_column()  # estimate before adjustment
+    first_appearance_ma: Mapped[float | None] = mapped_column()
+    last_appearance_ma: Mapped[float | None] = mapped_column()
+
+    source = relationship("Source")
+    species = relationship("Species")
+    family_taxon = relationship("Taxon")
 
 
 class PhylogenyEdge(Base):
-    """Evolutionary relationship, stored separately from taxonomic hierarchy."""
+    """Parent -> child link between phylo_nodes. A child has exactly one parent."""
     __tablename__ = "phylogeny_edges"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    parent_species_id: Mapped[int | None] = mapped_column(
-        ForeignKey("species.id"), index=True
+    parent_node_id: Mapped[int] = mapped_column(
+        ForeignKey("phylo_nodes.id"), index=True
     )
-    child_species_id: Mapped[int | None] = mapped_column(
-        ForeignKey("species.id"), index=True
+    child_node_id: Mapped[int] = mapped_column(
+        ForeignKey("phylo_nodes.id"), index=True, unique=True
     )
     source: Mapped[str | None] = mapped_column(String(100))
 
@@ -110,8 +182,3 @@ class Occurrence(Base):
     license: Mapped[str | None] = mapped_column(String(100))
 
     species = relationship("Species")
-
-# CAVEAT on phylogeny_edges: modelling edges as species-to-species only works
-# for a flat demo. A real induced phylogeny has *internal* nodes (unnamed common
-# ancestors) that aren't species. When you outgrow this, add a `phylo_nodes`
-# table and point edges at node ids instead of species ids. Fine to defer for V1.

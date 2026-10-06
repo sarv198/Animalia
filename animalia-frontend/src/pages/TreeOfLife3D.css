@@ -1,0 +1,1066 @@
+/* Tree of Life in 3D — the same exhibit palette as the 2D page. */
+
+:root:has(.world-page) {
+  --phylo-charcoal: #13120f;
+  --phylo-shale: #1b1a16;
+  --phylo-slate: #2a2822;
+  --phylo-edge: #36332b;
+  --phylo-bone: #ece6d6;
+  --phylo-limestone: #c9c1ad;
+  --phylo-sandstone: #a89d84;
+  --phylo-stone: #7d7565;
+  --phylo-amber: #e2b65a;
+  --phylo-olive: #8a9a5b;
+  --phylo-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --phylo-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+#root:has(.world-page) {
+  height: 100vh;
+  background: var(--phylo-charcoal);
+}
+
+.page:has(.world-page) {
+  padding: 0;
+  min-height: 0;
+}
+
+.world-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--phylo-bone);
+  font-family: var(--phylo-sans);
+  background: var(--phylo-charcoal);
+}
+
+.world-header {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem 2rem;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--phylo-slate);
+}
+
+.world-eyebrow {
+  margin: 0;
+  color: var(--phylo-sandstone);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.world-titles h1 {
+  margin: 0.15rem 0 0;
+  font-family: var(--phylo-display);
+  font-weight: 420;
+  font-size: 1.8rem;
+}
+
+.world-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.world-controls > button,
+.world-actions button,
+.tour-controls button,
+.museum-actions button,
+.world-end {
+  padding: 0.38rem 0.85rem;
+  border: 1px solid var(--phylo-edge);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--phylo-limestone);
+  font: inherit;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: color 0.25s, border-color 0.25s, background-color 0.25s;
+}
+
+.world-controls > button:hover:not(:disabled),
+.world-actions button:hover,
+.tour-controls button:hover:not(:disabled),
+.museum-actions button:hover,
+.world-end:hover {
+  color: var(--phylo-bone);
+  border-color: var(--phylo-sandstone);
+}
+
+.world-controls > button:disabled,
+.tour-controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.world-controls > button.quiet {
+  border-color: transparent;
+  color: var(--phylo-sandstone);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.world-page button:focus-visible,
+.world-page input:focus-visible {
+  outline: 2px solid var(--phylo-amber);
+  outline-offset: 2px;
+}
+
+.world-status {
+  margin: 1rem 2rem;
+}
+
+.world-error {
+  color: #e7a69a;
+}
+
+/* Search */
+
+.world-search {
+  position: relative;
+}
+
+.world-search input {
+  width: 15rem;
+  padding: 0.42rem 0.8rem;
+  border: 1px solid var(--phylo-edge);
+  border-radius: 999px;
+  background: rgba(19, 18, 15, 0.8);
+  color: var(--phylo-bone);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.world-results {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 6;
+  width: 19rem;
+  max-height: 20rem;
+  overflow: auto;
+  margin: 0;
+  padding: 0.3rem;
+  list-style: none;
+  background: rgba(23, 22, 18, 0.98);
+  border: 1px solid var(--phylo-edge);
+  border-radius: 10px;
+}
+
+.world-results button {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.4rem 0.55rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--phylo-bone);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.world-results button:hover {
+  background: var(--phylo-shale);
+}
+
+.world-results small {
+  color: var(--phylo-sandstone);
+}
+
+/* Stage and the engine's layers */
+
+.world-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.world-host {
+  position: absolute;
+  inset: 0;
+  /* The label renderer sets z-index per label; keep those below the panels */
+  isolation: isolate;
+}
+
+.world-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  touch-action: none;
+}
+
+.world-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.world-plaque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+  transition: opacity 0.6s ease;
+}
+
+.plaque-name {
+  color: var(--phylo-bone);
+  font-family: var(--phylo-display);
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+}
+
+.plaque-sci {
+  color: var(--phylo-sandstone);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.world-plaque[data-level='0'] {
+  opacity: 0.15;
+}
+
+.world-plaque[data-level='1'] {
+  opacity: 0.45;
+}
+
+/* Gives way to a broader or emphasised plaque that would overlap it on screen */
+.world-plaque.crowded {
+  visibility: hidden;
+}
+
+.world-family {
+  color: var(--phylo-limestone);
+  font-size: 11.5px;
+  white-space: nowrap;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.world-family.visible {
+  opacity: 0.9;
+}
+
+.world-family.visible[data-level='4'] {
+  opacity: 1;
+  color: var(--phylo-amber);
+  font-weight: 600;
+}
+
+.world-family.visible[data-level='3'] {
+  opacity: 1;
+  color: var(--phylo-bone);
+}
+
+.world-family.visible[data-level='0'] {
+  opacity: 0.18;
+}
+
+.world-portrait {
+  margin: 0;
+  width: 112px;
+  opacity: 0;
+  transform: translateY(6px) scale(0.85);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  text-align: center;
+}
+
+.world-portrait.visible {
+  opacity: 1;
+  transform: none;
+}
+
+.world-portrait img {
+  display: block;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--phylo-sandstone);
+  background: var(--phylo-shale);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+.world-portrait figcaption {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.25rem;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+
+.portrait-common {
+  color: var(--phylo-bone);
+  font-family: var(--phylo-display);
+  font-size: 12px;
+}
+
+.world-portrait em {
+  color: var(--phylo-limestone);
+  font-size: 10.5px;
+}
+
+.world-portrait small {
+  color: var(--phylo-stone);
+  font-size: 8.5px;
+}
+
+.world-period {
+  color: var(--phylo-stone);
+  font-family: var(--phylo-display);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.world-tick {
+  color: var(--phylo-stone);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.world-period,
+.world-tick {
+  transition: opacity 0.5s ease;
+}
+
+/* Close in, the time column recedes so it does not sit on the families */
+.world-labels.near .world-period,
+.world-labels.near .world-tick {
+  opacity: 0.3;
+}
+
+/* Museum mode: exhibit plaques, revealed one after another */
+
+.world-labels.museum .world-plaque {
+  padding: 0.35rem 0.8rem 0.4rem;
+  border-top: 1px solid rgba(226, 182, 90, 0.6);
+  border-bottom: 1px solid rgba(226, 182, 90, 0.25);
+  background: rgba(19, 18, 15, 0.72);
+  animation: plaque-in 1.4s ease both;
+}
+
+.world-labels.museum .plaque-name {
+  font-size: 18px;
+}
+
+.world-labels.museum .world-plaque:nth-child(3n) { animation-delay: 0.6s; }
+.world-labels.museum .world-plaque:nth-child(3n + 1) { animation-delay: 1.2s; }
+.world-labels.museum .world-plaque:nth-child(3n + 2) { animation-delay: 1.8s; }
+
+@keyframes plaque-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Overlays */
+
+.world-scale {
+  position: absolute;
+  z-index: 3;
+  top: 1rem;
+  left: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem;
+  max-width: 50%;
+  color: var(--phylo-limestone);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.scale-level {
+  margin-right: 0.5rem;
+  color: var(--phylo-amber);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.scale-step {
+  font-family: var(--phylo-display);
+}
+
+.scale-sep {
+  margin-right: 0.3rem;
+  color: var(--phylo-stone);
+}
+
+.world-key {
+  position: absolute;
+  z-index: 3;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  max-width: 21rem;
+}
+
+.world-key .key {
+  position: static;
+}
+
+.world-encoding {
+  margin: 0 0 0.5rem;
+  padding: 0.55rem 0.75rem;
+  background: rgba(19, 18, 15, 0.82);
+  border: 1px solid var(--phylo-slate);
+  border-radius: 10px;
+  color: var(--phylo-sandstone);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.world-encoding strong {
+  color: var(--phylo-bone);
+  font-weight: 500;
+}
+
+.world-hint {
+  position: absolute;
+  z-index: 4;
+  top: 3.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.45rem 0.95rem;
+  border: 1px solid var(--phylo-amber);
+  border-radius: 999px;
+  background: rgba(19, 18, 15, 0.9);
+  color: var(--phylo-amber);
+  font-size: 0.85rem;
+}
+
+.world-chip {
+  position: absolute;
+  z-index: 5;
+  width: 278px;
+  padding: 0.65rem 0.8rem;
+  pointer-events: none;
+  background: rgba(19, 18, 15, 0.94);
+  border: 1px solid var(--phylo-edge);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  animation: rise 0.3s ease both;
+}
+
+.world-chip p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.world-chip.plaque {
+  border-top: 2px solid var(--phylo-amber);
+  border-radius: 2px;
+}
+
+.chip-family {
+  color: var(--phylo-sandstone);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.chip-common {
+  font-family: var(--phylo-display);
+  font-size: 1.1rem;
+}
+
+.chip-sci {
+  color: var(--phylo-limestone);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.chip-sci-plain {
+  color: var(--phylo-limestone);
+  font-size: 0.82rem;
+}
+
+.chip-flag {
+  font-size: 0.78rem;
+}
+
+.chip-fact {
+  margin-top: 0.35rem !important;
+  color: var(--phylo-limestone);
+  font-size: 0.8rem;
+}
+
+.chip-credit {
+  margin-top: 0.3rem !important;
+  color: var(--phylo-stone);
+  font-size: 0.66rem;
+}
+
+.chip-hint {
+  margin-top: 0.3rem !important;
+  color: var(--phylo-amber);
+  font-size: 0.75rem;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Selection card: the animal leads */
+
+.world-card,
+.world-compare {
+  position: absolute;
+  z-index: 5;
+  top: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  width: 400px;
+  overflow: auto;
+  box-sizing: border-box;
+  padding-bottom: 1.3rem;
+  background: rgba(23, 22, 18, 0.96);
+  border: 1px solid var(--phylo-slate);
+  border-radius: 14px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+  animation: card-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.world-compare {
+  bottom: auto;
+  padding: 1.1rem 1.3rem 1.2rem;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+.world-close {
+  position: sticky;
+  top: 0.6rem;
+  float: right;
+  z-index: 2;
+  margin: 0.6rem 0.6rem 0 0;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--phylo-edge);
+  border-radius: 50%;
+  background: rgba(19, 18, 15, 0.8);
+  color: var(--phylo-bone);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.world-card .card-photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 14px 14px 0 0;
+  background: var(--phylo-shale);
+}
+
+.world-card .card-photo,
+.world-card .card-photo figcaption {
+  margin: 0;
+}
+
+.world-card .card-photo figcaption {
+  padding: 0.4rem 1.2rem 0;
+  color: var(--phylo-stone);
+  font-size: 0.72rem;
+}
+
+.world-card .thumbs {
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.5rem 1.2rem 0;
+}
+
+.world-card .thumb {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+
+.world-card .thumb.active {
+  border-color: var(--phylo-amber);
+}
+
+.world-card .thumb img {
+  display: block;
+  width: 54px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.world-card a,
+.world-compare a {
+  color: var(--phylo-amber);
+}
+
+.world-card-head {
+  padding: 1rem 1.2rem 0;
+}
+
+.world-kicker {
+  margin: 0;
+  color: var(--phylo-sandstone);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.world-card h2,
+.world-compare h2 {
+  margin: 0.25rem 0 0.2rem;
+  font-family: var(--phylo-display);
+  font-weight: 430;
+  font-size: 1.75rem;
+  line-height: 1.15;
+}
+
+.world-plain {
+  color: var(--phylo-sandstone);
+  font-size: 1.1rem;
+}
+
+.world-sci {
+  margin: 0;
+  color: var(--phylo-limestone);
+}
+
+.world-sci em {
+  font-size: 1.05rem;
+}
+
+.world-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.9rem 1.2rem 0;
+}
+
+.world-section,
+.world-card .card-section {
+  margin: 1rem 1.2rem 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--phylo-slate);
+}
+
+.world-section h3,
+.world-card .card-section h3 {
+  margin: 0 0 0.45rem;
+  color: var(--phylo-sandstone);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.world-section p,
+.world-card .card-section p {
+  margin: 0 0 0.4rem;
+  line-height: 1.5;
+}
+
+.world-source,
+.world-muted,
+.world-card .card-source,
+.world-card .card-muted {
+  color: var(--phylo-stone);
+  font-size: 0.83rem;
+}
+
+.world-muted {
+  margin: 0.6rem 1.2rem 0;
+}
+
+.world-note,
+.world-card .card-note {
+  color: var(--phylo-limestone);
+  font-size: 0.88rem;
+}
+
+.world-card .status-pill,
+.world-card .iucn-pill {
+  display: inline-block;
+  padding: 0.08rem 0.55rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.world-card .status-pill.confirmed {
+  color: var(--phylo-olive);
+}
+
+.world-card .iucn-pill {
+  color: var(--phylo-bone);
+  border-color: var(--phylo-edge);
+  background: var(--phylo-shale);
+}
+
+.world-card .card-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Evolutionary Neighborhood schematic */
+
+.hood {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.hood-rings {
+  width: 96px;
+  height: 96px;
+}
+
+.hood-rings .ring {
+  fill: none;
+  stroke-width: 3;
+}
+
+.hood-rings .ring-1 {
+  stroke: var(--phylo-bone);
+}
+
+.hood-rings .ring-2 {
+  stroke: var(--phylo-sandstone);
+  stroke-dasharray: 4 4;
+}
+
+.hood-rings .ring-3 {
+  stroke: var(--phylo-stone);
+  stroke-dasharray: 2 5;
+}
+
+.hood-rings .ring-core {
+  fill: var(--phylo-amber);
+}
+
+.hood-rings text {
+  fill: var(--phylo-sandstone);
+  font-size: 13px;
+}
+
+.hood-zones {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+  font-size: 0.86rem;
+}
+
+.hood-zones strong {
+  display: block;
+  color: var(--phylo-bone);
+  font-weight: 500;
+}
+
+.hood-zones span {
+  color: var(--phylo-limestone);
+}
+
+.world-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.world-chips button {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--phylo-edge);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--phylo-bone);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.world-chips button:hover {
+  border-color: var(--phylo-amber);
+}
+
+.world-more {
+  color: var(--phylo-stone);
+  font-size: 0.78rem;
+  align-self: center;
+}
+
+.world-aid {
+  margin-top: 0.55rem !important;
+  color: var(--phylo-stone) !important;
+  font-size: 0.76rem;
+  font-style: italic;
+}
+
+/* Comparison */
+
+.world-compare h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.world-compare h2 button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--phylo-amber);
+  font: inherit;
+  cursor: pointer;
+}
+
+.world-compare h2 span {
+  color: var(--phylo-sandstone);
+  font-size: 1rem;
+}
+
+.world-compare p {
+  margin: 0.45rem 0;
+  line-height: 1.5;
+}
+
+.compare-paths p {
+  color: var(--phylo-limestone);
+  font-size: 0.85rem;
+}
+
+.compare-paths span {
+  color: var(--phylo-bone);
+}
+
+.world-end {
+  margin-top: 0.6rem;
+}
+
+/* Tour and follow-lineage narration */
+
+.world-tour {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  bottom: 1.4rem;
+  transform: translateX(-50%);
+  width: min(40rem, calc(100% - 2.5rem));
+  box-sizing: border-box;
+  padding: 0.95rem 1.3rem 1rem;
+  background: rgba(19, 18, 15, 0.93);
+  border-top: 2px solid var(--phylo-amber);
+  border-radius: 4px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.tour-kicker {
+  margin: 0;
+  color: var(--phylo-amber);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.world-tour h2 {
+  margin: 0.25rem 0 0.35rem;
+  font-family: var(--phylo-display);
+  font-weight: 430;
+  font-size: 1.5rem;
+  animation: rise 0.6s ease both;
+}
+
+.world-tour h2 span {
+  color: var(--phylo-sandstone);
+  font-size: 1rem;
+}
+
+.tour-line {
+  margin: 0.15rem 0;
+  color: var(--phylo-limestone);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  animation: rise 0.8s ease both;
+}
+
+.tour-controls {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+
+/* Museum entrance */
+
+.museum-intro {
+  position: absolute;
+  z-index: 6;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(36rem, calc(100% - 2rem));
+  text-align: center;
+  animation: museum-in 2.2s ease both;
+  pointer-events: auto;
+}
+
+.museum-intro h1 {
+  margin: 0.2rem 0 0.4rem;
+  font-family: var(--phylo-display);
+  font-weight: 380;
+  font-size: clamp(2.6rem, 7vw, 4.6rem);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.8);
+}
+
+.museum-eyebrow {
+  margin: 0;
+  color: var(--phylo-amber);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.museum-sub {
+  margin: 0 auto 0.4rem;
+  max-width: 30rem;
+  color: var(--phylo-limestone);
+  font-family: var(--phylo-display);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.9);
+}
+
+.museum-hint {
+  color: var(--phylo-sandstone);
+  font-size: 0.8rem;
+}
+
+.museum-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.museum-actions .primary {
+  border-color: var(--phylo-amber);
+  color: var(--phylo-amber);
+}
+
+@keyframes museum-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -46%);
+  }
+}
+
+.world-page.museum .world-key,
+.world-page.museum .world-scale {
+  opacity: 0.55;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Small screens: selected-family exploration first */
+
+@media (max-width: 960px) {
+  .world-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .world-titles h1 {
+    font-size: 1.4rem;
+  }
+
+  .world-search input {
+    width: 100%;
+  }
+
+  .world-search {
+    flex: 1 1 100%;
+  }
+
+  .world-controls > button.quiet {
+    display: none;
+  }
+
+  .world-key {
+    display: none;
+  }
+
+  .world-scale {
+    max-width: calc(100% - 2rem);
+    font-size: 0.78rem;
+  }
+
+  .world-chip {
+    display: none;
+  }
+
+  .world-card,
+  .world-compare {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 62%;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .world-tour {
+    bottom: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-page *,
+  .world-labels * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

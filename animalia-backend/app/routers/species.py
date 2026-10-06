@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.database import get_db
 from app.models import Species, Taxon
@@ -19,7 +19,8 @@ def get_species(species_id: int, db: Session = Depends(get_db)) -> SpeciesDetail
         .options(
             joinedload(Species.taxon)
             .joinedload(Taxon.parent)
-            .joinedload(Taxon.parent)
+            .joinedload(Taxon.parent),
+            selectinload(Species.media),
         )
         .filter(Species.id == species_id)
         .first()

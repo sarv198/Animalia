@@ -1,0 +1,1171 @@
+/* Reptile phylogeny — a natural-history exhibit.
+   Palette: charcoal, limestone, sandstone, bone; amber for interaction. */
+
+:root:has(.phylo-page) {
+  --phylo-charcoal: #13120f;
+  --phylo-shale: #1b1a16;
+  --phylo-slate: #2a2822;
+  --phylo-edge: #36332b;
+  --phylo-bone: #ece6d6;
+  --phylo-limestone: #c9c1ad;
+  --phylo-sandstone: #a89d84;
+  --phylo-stone: #7d7565;
+  --phylo-amber: #e2b65a;
+  --phylo-olive: #8a9a5b;
+  --phylo-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --phylo-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+#root:has(.phylo-page) {
+  height: 100vh;
+  background: var(--phylo-charcoal);
+}
+
+.page:has(.phylo-page) {
+  padding: 0;
+  min-height: 0;
+}
+
+.phylo-page {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--phylo-bone);
+  font-family: var(--phylo-sans);
+  background:
+    radial-gradient(120% 80% at 70% 0%, rgba(138, 154, 91, 0.06), transparent 60%),
+    radial-gradient(90% 70% at 0% 100%, rgba(168, 157, 132, 0.05), transparent 65%),
+    var(--phylo-charcoal);
+}
+
+/* Almost subliminal grain over the whole exhibit. */
+.phylo-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  z-index: 0;
+}
+
+/* Header ---------------------------------------------------------------- */
+
+.phylo-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem 2.5rem;
+  padding: 1.4rem 2.5rem 1rem;
+  border-bottom: 1px solid var(--phylo-slate);
+}
+
+.phylo-eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--phylo-sandstone);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.phylo-titles h1 {
+  margin: 0 0 0.4rem;
+  font-family: var(--phylo-display);
+  font-weight: 420;
+  font-size: clamp(1.7rem, 2.6vw, 2.4rem);
+  letter-spacing: -0.01em;
+  font-variation-settings: 'opsz' 96;
+}
+
+.phylo-caption {
+  margin: 0;
+  max-width: 56rem;
+  color: var(--phylo-limestone);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.phylo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.phylo-views {
+  display: inline-flex;
+  border: 1px solid var(--phylo-edge);
+  border-radius: 999px;
+  padding: 2px;
+}
+
+.phylo-view,
+.phylo-action,
+.card-actions button,
+.lens-exit,
+.key-toggle {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--phylo-limestone);
+  font: inherit;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color 0.25s, background-color 0.25s, border-color 0.25s;
+}
+
+.phylo-view {
+  padding: 0.38rem 0.9rem;
+  border-radius: 999px;
+}
+
+.phylo-view.active {
+  background: var(--phylo-bone);
+  color: var(--phylo-charcoal);
+}
+
+.phylo-action,
+.lens-exit {
+  padding: 0.4rem 0.9rem;
+  border-color: var(--phylo-edge);
+  border-radius: 999px;
+}
+
+.phylo-action:hover,
+.card-actions button:hover,
+.lens-exit:hover,
+.key-toggle:hover {
+  color: var(--phylo-bone);
+  border-color: var(--phylo-sandstone);
+}
+
+.phylo-action.quiet {
+  border-color: transparent;
+  color: var(--phylo-sandstone);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.phylo-view:focus-visible,
+.phylo-action:focus-visible,
+.card-actions button:focus-visible,
+.phylo-table tr:focus-visible,
+.thumb:focus-visible,
+.card-close:focus-visible,
+.relatives button:focus-visible,
+.trail button:focus-visible,
+.lens-play:focus-visible,
+.phylo-svg .hit:focus-visible {
+  outline: 2px solid var(--phylo-amber);
+  outline-offset: 2px;
+}
+
+.phylo-status {
+  position: relative;
+  z-index: 1;
+  margin: 1rem 2.5rem;
+}
+
+.phylo-error {
+  color: #e7a69a;
+}
+
+/* Stage ----------------------------------------------------------------- */
+
+.phylo-stage {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  transition: filter 0.6s ease;
+}
+
+.phylo-stage.rewinding {
+  filter: sepia(0.35) saturate(0.7) brightness(0.92);
+}
+
+.tree-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.phylo-svg {
+  display: block;
+  cursor: grab;
+  touch-action: none;
+}
+
+.phylo-svg:active {
+  cursor: grabbing;
+}
+
+/* Strata and the time axis */
+
+.stratum-edge {
+  stroke: rgba(201, 193, 173, 0.07);
+}
+
+.period-label {
+  fill: var(--phylo-stone);
+  font-family: var(--phylo-display);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  transition: fill 0.8s ease;
+}
+
+.period-label.current {
+  fill: var(--phylo-amber);
+}
+
+.tick-line {
+  stroke: rgba(201, 193, 173, 0.05);
+}
+
+.tick-label {
+  fill: var(--phylo-stone);
+  font-variant-numeric: tabular-nums;
+}
+
+.axis-title {
+  fill: var(--phylo-sandstone);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.event-mark {
+  fill: var(--phylo-stone);
+  transition: fill 0.8s ease;
+}
+
+.event-mark.passed {
+  fill: var(--phylo-amber);
+}
+
+/* Branches */
+
+.branch {
+  stroke-linecap: round;
+  stroke-opacity: 0.72;
+  transition: opacity 0.5s ease, stroke 0.5s ease, stroke-width 0.4s ease, stroke-opacity 0.5s ease;
+}
+
+.branch.dim {
+  opacity: 0.16;
+}
+
+.branch.near {
+  stroke-opacity: 1;
+}
+
+.branch.lit {
+  stroke-opacity: 1;
+}
+
+.branch.tracing {
+  stroke-dashoffset: -1;
+  animation: trace-back 0.55s ease-out forwards;
+}
+
+@keyframes trace-back {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.range-bar {
+  stroke-width: 6px;
+  stroke-linecap: round;
+  stroke-opacity: 0.85;
+  transition: opacity 0.5s ease;
+}
+
+.ci-line {
+  stroke: rgba(236, 230, 214, 0.32);
+  stroke-width: 1.2;
+  transition: opacity 0.5s ease;
+}
+
+.range-bar.dim,
+.ci-line.dim {
+  opacity: 0.15;
+}
+
+/* Clades */
+
+.clade {
+  transition: opacity 0.5s ease;
+}
+
+.clade.dim {
+  opacity: 0.28;
+}
+
+.clade-dot.major {
+  stroke: var(--phylo-bone);
+  stroke-width: 1;
+}
+
+.clade-label {
+  fill: var(--phylo-stone);
+  transition: opacity 0.5s ease, fill 0.5s ease;
+}
+
+.clade-label.major {
+  fill: var(--phylo-limestone);
+  font-family: var(--phylo-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.clade.lit .clade-label,
+.clade-label.selected {
+  fill: var(--phylo-bone);
+}
+
+.clade-label.tracing-label {
+  animation: label-rise 0.6s ease-out both;
+}
+
+@keyframes label-rise {
+  from {
+    opacity: 0;
+    fill: var(--phylo-amber);
+  }
+  60% {
+    opacity: 1;
+    fill: var(--phylo-amber);
+  }
+}
+
+/* Tips: the families, and the animals that emerge from them */
+
+.tip {
+  transition: opacity 1.4s ease;
+}
+
+.tip-dot {
+  transition: r 0.35s ease;
+}
+
+.tip-label {
+  fill: var(--phylo-limestone);
+  font-size: 12.5px;
+  transition: opacity 0.5s ease, fill 0.4s ease;
+}
+
+.tip.near .tip-label {
+  fill: var(--phylo-bone);
+}
+
+.tip.lit .tip-label,
+.tip-label.selected {
+  fill: var(--phylo-bone);
+  font-weight: 600;
+}
+
+.tip-flag {
+  font-weight: 600;
+}
+
+.tip-photo {
+  animation: emerge 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.tip-photo-ring {
+  fill: var(--phylo-shale);
+  stroke-width: 1.5;
+}
+
+@keyframes emerge {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+.tip-photo {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.row-selected {
+  fill: rgba(226, 182, 90, 0.07);
+}
+
+.hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+/* The time lens on the tree */
+
+.lens-line {
+  stroke: var(--phylo-amber);
+  stroke-width: 1.2;
+  stroke-opacity: 0.8;
+}
+
+.lens-handle {
+  cursor: ew-resize;
+}
+
+.lens-handle circle {
+  fill: var(--phylo-charcoal);
+  stroke: var(--phylo-amber);
+  stroke-width: 1.5;
+}
+
+.lens-handle text {
+  fill: var(--phylo-amber);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+/* Floating key ---------------------------------------------------------- */
+
+.key {
+  position: absolute;
+  z-index: 3;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  max-width: 21rem;
+  color: var(--phylo-limestone);
+  font-size: 0.78rem;
+}
+
+.key-toggle {
+  padding: 0.3rem 0.75rem;
+  border-color: var(--phylo-edge);
+  border-radius: 999px;
+  background: rgba(19, 18, 15, 0.85);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+}
+
+.key-body {
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  background: rgba(19, 18, 15, 0.88);
+  border: 1px solid var(--phylo-slate);
+  border-radius: 10px;
+}
+
+.key ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.28rem;
+}
+
+.key-marks {
+  margin-top: 0.6rem !important;
+  padding-top: 0.6rem !important;
+  border-top: 1px solid var(--phylo-slate);
+}
+
+.key li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.key-help {
+  margin: 0.6rem 0 0;
+  color: var(--phylo-stone);
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.mark-symbol {
+  display: inline-block;
+  min-width: 10px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.mark-bar,
+.mark-ghost,
+.mark-ci {
+  display: inline-block;
+  width: 18px;
+  flex: none;
+}
+
+.mark-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--phylo-limestone);
+}
+
+.mark-ghost {
+  border-top: 2px dashed var(--phylo-limestone);
+}
+
+.mark-ci {
+  border-top: 1.5px solid rgba(236, 230, 214, 0.45);
+}
+
+/* Time lens bar --------------------------------------------------------- */
+
+.time-lens {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: auto minmax(180px, 320px) minmax(220px, 380px) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  background: rgba(19, 18, 15, 0.9);
+  border: 1px solid var(--phylo-slate);
+  border-radius: 999px;
+  max-width: calc(100% - 26rem);
+}
+
+.lens-play {
+  width: 2.3rem;
+  height: 2.3rem;
+  border: 1px solid var(--phylo-amber);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--phylo-amber);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.lens-track input {
+  width: 100%;
+  accent-color: var(--phylo-amber);
+}
+
+.lens-ends {
+  display: flex;
+  justify-content: space-between;
+  color: var(--phylo-stone);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+}
+
+.lens-narration p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.lens-period {
+  font-family: var(--phylo-display);
+  font-size: 1.05rem;
+  color: var(--phylo-bone);
+  animation: fade-in 0.9s ease both;
+}
+
+.lens-period span {
+  font-family: var(--phylo-sans);
+  font-size: 0.78rem;
+  color: var(--phylo-sandstone);
+}
+
+.lens-event {
+  color: var(--phylo-limestone);
+  font-size: 0.8rem;
+  animation: fade-in 0.9s ease both;
+}
+
+.lens-hint {
+  color: var(--phylo-sandstone);
+  font-size: 0.82rem;
+}
+
+.time-lens.present .lens-period {
+  color: var(--phylo-amber);
+  font-size: 1.2rem;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+/* Hover card ------------------------------------------------------------ */
+
+.hover-card {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  gap: 0.8rem;
+  width: 298px;
+  padding: 0.7rem;
+  pointer-events: none;
+  background: rgba(19, 18, 15, 0.95);
+  border: 1px solid var(--phylo-edge);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  animation: fade-in 0.25s ease both;
+}
+
+.hover-photo {
+  flex: none;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--phylo-shale);
+  animation: emerge 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.hover-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hover-text p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.hover-common {
+  font-family: var(--phylo-display);
+  font-size: 1.05rem;
+}
+
+.hover-scientific {
+  font-style: italic;
+  color: var(--phylo-limestone);
+  font-size: 0.85rem;
+}
+
+.hover-family,
+.hover-title {
+  margin-top: 0.25rem !important;
+  color: var(--phylo-sandstone);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hover-title {
+  color: var(--phylo-bone);
+  font-family: var(--phylo-display);
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.hover-age {
+  margin-top: 0.3rem !important;
+  color: var(--phylo-limestone);
+  font-size: 0.8rem;
+}
+
+.hover-flag {
+  font-size: 0.78rem;
+}
+
+.hover-credit {
+  margin-top: 0.3rem !important;
+  color: var(--phylo-stone);
+  font-size: 0.66rem;
+}
+
+.hover-hint {
+  color: var(--phylo-stone);
+  font-size: 0.7rem;
+}
+
+/* Detail card: the animal leads ----------------------------------------- */
+
+.detail-card {
+  position: absolute;
+  z-index: 5;
+  top: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  width: 410px;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 0 0 1.4rem;
+  background: rgba(23, 22, 18, 0.97);
+  border: 1px solid var(--phylo-slate);
+  border-radius: 14px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4);
+  animation: card-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+.card-close {
+  position: sticky;
+  top: 0.6rem;
+  float: right;
+  z-index: 2;
+  margin: 0.6rem 0.6rem 0 0;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--phylo-edge);
+  border-radius: 50%;
+  background: rgba(19, 18, 15, 0.8);
+  color: var(--phylo-bone);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.card-photo {
+  margin: 0;
+}
+
+.card-photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--phylo-shale);
+  border-radius: 14px 14px 0 0;
+}
+
+.card-photo figcaption {
+  padding: 0.4rem 1.3rem 0;
+  color: var(--phylo-stone);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.card-photo a,
+.detail-card a,
+.credits a {
+  color: var(--phylo-amber);
+}
+
+.thumbs {
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.55rem 1.3rem 0;
+}
+
+.thumb {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+.thumb.active {
+  border-color: var(--phylo-amber);
+}
+
+.thumb img {
+  display: block;
+  width: 56px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.card-nophoto {
+  padding: 3.2rem 1.3rem 0;
+}
+
+.card-head {
+  padding: 1rem 1.3rem 0;
+}
+
+.card-kicker {
+  margin: 0;
+  color: var(--phylo-sandstone);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.card-title {
+  margin: 0.25rem 0 0.15rem;
+  font-family: var(--phylo-display);
+  font-weight: 430;
+  font-size: 1.85rem;
+  line-height: 1.15;
+}
+
+.card-scientific {
+  margin: 0;
+  color: var(--phylo-limestone);
+}
+
+.card-scientific em {
+  font-size: 1.05rem;
+}
+
+.card-role {
+  color: var(--phylo-stone);
+  font-size: 0.8rem;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 1rem 1.3rem 0;
+}
+
+.card-actions button {
+  padding: 0.35rem 0.8rem;
+  border-color: var(--phylo-edge);
+  border-radius: 999px;
+}
+
+.card-section {
+  margin: 1.1rem 1.3rem 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--phylo-slate);
+}
+
+.card-section h3 {
+  margin: 0 0 0.45rem;
+  color: var(--phylo-sandstone);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.card-section p {
+  margin: 0 0 0.45rem;
+  line-height: 1.5;
+}
+
+.card-muted,
+.card-source {
+  color: var(--phylo-stone);
+  font-size: 0.84rem;
+}
+
+.card-muted {
+  padding: 0 1.3rem;
+}
+
+.card-section .card-muted {
+  padding: 0;
+}
+
+.card-note {
+  color: var(--phylo-limestone);
+  font-size: 0.9rem;
+}
+
+.status-pill,
+.iucn-pill {
+  display: inline-block;
+  padding: 0.08rem 0.55rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.status-pill.confirmed {
+  color: var(--phylo-olive);
+}
+
+.iucn-pill {
+  color: var(--phylo-bone);
+  border-color: var(--phylo-edge);
+  background: var(--phylo-shale);
+}
+
+.card-links,
+.relatives {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.relatives {
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.relatives button,
+.trail button {
+  border: 1px solid var(--phylo-edge);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--phylo-bone);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.7rem;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+.relatives button:hover,
+.trail button:hover {
+  border-color: var(--phylo-amber);
+}
+
+.trail {
+  margin: 0;
+  padding: 0 0 0 0.9rem;
+  list-style: none;
+  border-left: 1px solid var(--phylo-edge);
+}
+
+.trail li {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.18rem 0;
+  animation: fade-in 0.5s ease both;
+}
+
+.trail li::before {
+  content: '';
+  position: absolute;
+  left: -1.2rem;
+  top: 0.75rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--phylo-sandstone);
+}
+
+.trail button {
+  border-color: transparent;
+  padding: 0.1rem 0.3rem;
+}
+
+.trail span {
+  color: var(--phylo-stone);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Table view ------------------------------------------------------------ */
+
+.phylo-table-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  padding: 1rem 2.5rem 2rem;
+}
+
+.phylo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.phylo-table th,
+.phylo-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--phylo-slate);
+  text-align: left;
+  font-weight: 400;
+}
+
+.phylo-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--phylo-charcoal);
+  color: var(--phylo-sandstone);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.phylo-table tbody th {
+  font-family: var(--phylo-display);
+  font-size: 1rem;
+}
+
+.phylo-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.phylo-table tbody tr:hover,
+.phylo-table tbody tr.selected {
+  background: var(--phylo-shale);
+}
+
+.phylo-table .swatch {
+  margin-right: 0.45rem;
+}
+
+.phylo-table .num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Credits --------------------------------------------------------------- */
+
+.credits-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(10, 9, 7, 0.72);
+  animation: fade-in 0.3s ease both;
+}
+
+.credits {
+  position: relative;
+  width: min(44rem, 100%);
+  max-height: 85vh;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 1.6rem 1.8rem;
+  background: var(--phylo-shale);
+  border: 1px solid var(--phylo-edge);
+  border-radius: 14px;
+  color: var(--phylo-limestone);
+  line-height: 1.55;
+}
+
+.credits h2 {
+  margin: 0 0 0.8rem;
+  font-family: var(--phylo-display);
+  font-weight: 430;
+  color: var(--phylo-bone);
+}
+
+.credits h3 {
+  margin: 1.1rem 0 0.4rem;
+  color: var(--phylo-sandstone);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.credits ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.credits li {
+  margin-bottom: 0.4rem;
+}
+
+.credits cite {
+  font-style: normal;
+  color: var(--phylo-bone);
+}
+
+.credits-note {
+  margin: 1rem 0 0;
+  color: var(--phylo-stone);
+  font-size: 0.82rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Small screens --------------------------------------------------------- */
+
+@media (max-width: 960px) {
+  /* Phones: the page scrolls; the tree gets a tall stage of its own. */
+  #root:has(.phylo-page) {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .phylo-stage {
+    flex: none;
+    height: 82vh;
+  }
+
+  .phylo-header {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .phylo-caption {
+    font-size: 0.82rem;
+  }
+
+  .time-lens {
+    left: 0.75rem;
+    right: 0.75rem;
+    transform: none;
+    max-width: none;
+    grid-template-columns: auto 1fr;
+    border-radius: 14px;
+    bottom: 0.75rem;
+  }
+
+  .lens-narration,
+  .lens-exit {
+    grid-column: 1 / -1;
+  }
+
+  .key {
+    bottom: auto;
+    top: 0.75rem;
+    left: 0.75rem;
+  }
+
+  .key:not(.open) .key-body {
+    display: none;
+  }
+
+  .detail-card {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 72%;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .phylo-table-wrap {
+    padding: 0.75rem 1rem 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phylo-page *,
+  .phylo-page *::before {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

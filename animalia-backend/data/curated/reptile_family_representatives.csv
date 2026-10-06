@@ -10,14 +10,14 @@ Gekkota,Dibamidae,Dibamus novaeguineae,New Guinea blind skink,
 Gekkota,Diplodactylidae,Diplodactylus vittatus,Wood gecko,
 Gekkota,Eublepharidae,Eublepharis macularius,Leopard gecko,
 Gekkota,Gekkonidae,Gekko gecko,Tokay gecko,
-Gekkota,Phyllodactylidae,Euleptes europaea,European leaf-toed gecko,
+Gekkota,Phyllodactylidae,Tarentola mauritanica,Moorish gecko,"Replaces Euleptes europaea, which The Reptile Database places in Sphaerodactylidae"
 Gekkota,Pygopodidae,Lialis burtonis,Burton's legless lizard,
 Gekkota,Sphaerodactylidae,Sphaerodactylus notatus,Reef gecko,
 Iguania,Agamidae,Pogona vitticeps,Central bearded dragon,
 Iguania,Chamaeleonidae,Chamaeleo calyptratus,Veiled chameleon,
 Iguania,Corytophanidae,Basiliscus basiliscus,Common basilisk,
 Iguania,Crotaphytidae,Crotaphytus collaris,Eastern collared lizard,
-Iguania,Dactyloidae,Anolis carolinensis,Green anole,
+Iguania,Anolidae,Anolis carolinensis,Green anole,
 Iguania,Hoplocercidae,Hoplocercus spinosus,Amazon spinytail lizard,
 Iguania,Iguanidae,Iguana iguana,Green iguana,
 Iguania,Leiocephalidae,Leiocephalus carinatus,Northern curly-tailed lizard,
@@ -25,15 +25,14 @@ Iguania,Leiosauridae,Leiosaurus catamarcensis,,
 Iguania,Liolaemidae,Liolaemus tenuis,,
 Iguania,Opluridae,Oplurus cuvieri,Madagascar collared iguana,
 Iguania,Phrynosomatidae,Phrynosoma cornutum,Texas horned lizard,
-Iguania,Polychrotidae,Polychrus marmoratus,Common polychrus,Family placement contested; often merged into Dactyloidae in some taxonomies
+Iguania,Polychrotidae,Polychrus marmoratus,Common polychrus,Family placement contested; often merged into Anolidae (Dactyloidae) in some taxonomies
 Iguania,Tropiduridae,Tropidurus torquatus,,
 Lacertoidea,Alopoglossidae,Alopoglossus angulatus,,
 Lacertoidea,Gymnophthalmidae,Gymnophthalmus speciosus,Golden spectacled tegu,
 Lacertoidea,Lacertidae,Lacerta agilis,Sand lizard,
 Lacertoidea,Teiidae,Ameiva ameiva,Giant ameiva,
 Anguimorpha,Anguidae,Anguis fragilis,Slow worm,
-Anguimorpha,Anniellidae,Anniella pulchra,California legless lizard,
-Anguimorpha,Diploglossidae,Diploglossus monotropis,Neotropical galliwasp,
+Anguimorpha,Diploglossidae,Diploglossus pleii,Puerto Rican galliwasp,"Replaces Diploglossus monotropis, which Open Tree places by taxonomy only; D. pleii is in 3 published trees"
 Anguimorpha,Helodermatidae,Heloderma suspectum,Gila monster,
 Anguimorpha,Lanthanotidae,Lanthanotus borneensis,Earless monitor lizard,Monotypic family
 Anguimorpha,Shinisauridae,Shinisaurus crocodilurus,Chinese crocodile lizard,Monotypic family
@@ -54,7 +53,7 @@ Alethinophidia (snakes),Elapidae,Naja naja,Indian cobra,
 Alethinophidia (snakes),Homalopsidae,Homalopsis buccata,Puff-faced water snake,
 Alethinophidia (snakes),Lamprophiidae,Boaedon fuliginosus,Brown house snake,
 Alethinophidia (snakes),Loxocemidae,Loxocemus bicolor,Mexican burrowing python,Monotypic family
-Alethinophidia (snakes),Micrelapidae,Micrelaps muelleri,Mueller's two-headed snake,"Very recently split family (2023), only 3 species; some databases still list genus under Lamprophiidae"
+Alethinophidia (snakes),Micrelapidae,Micrelaps bicoloratus,Kenya Two-headed Snake,"Replaces Micrelaps muelleri, which Open Tree places by taxonomy only; M. bicoloratus is in 3 published trees. Very recently split family (2023)"
 Alethinophidia (snakes),Pareidae,Pareas carinatus,Keeled slug snake,
 Alethinophidia (snakes),Pythonidae,Python bivittatus,Burmese python,
 Alethinophidia (snakes),Tropidophiidae,Tropidophis melanurus,Cuban wood snake,
@@ -62,8 +61,8 @@ Alethinophidia (snakes),Uropeltidae,Rhinophis melanogaster,Gray's earth snake,
 Alethinophidia (snakes),Viperidae,Crotalus atrox,Western diamondback rattlesnake,
 Alethinophidia (snakes),Xenodermidae,Xenodermus javanicus,Dragon snake,
 Alethinophidia (snakes),Xenopeltidae,Xenopeltis unicolor,Sunbeam snake,
-Scolecophidia (blindsnakes),Anomalepidae,Liotyphlops albirostris,,
-Scolecophidia (blindsnakes),Gerrhopilidae,Gerrhopilus mirus,,"Family only split from Typhlopidae in 2010 - double-check current accepted species name"
+Scolecophidia (blindsnakes),Anomalepididae,Liotyphlops albirostris,,
+Scolecophidia (blindsnakes),Gerrhopilidae,Gerrhopilus mirus,,Family only split from Typhlopidae in 2010 - double-check current accepted species name
 Scolecophidia (blindsnakes),Leptotyphlopidae,Tetracheilostoma carlae,Barbados threadsnake,
 Scolecophidia (blindsnakes),Typhlopidae,Indotyphlops braminus,Brahminy blindsnake,
 Scolecophidia (blindsnakes),Xenotyphlopidae,Xenotyphlops grandidieri,Malagasy blind snake,Monotypic-ish family (2 species)

@@ -1,6 +1,8 @@
 {
   "col": "",
   "gbif": "",
-  "opentree": "",
-  "iucn": "live_lookup_only"
+  "opentree": "opentree16.1",
+  "iucn": "live_lookup_only",
+  "reptiledb": "2026-06",
+  "timetree": "20260820"
 }

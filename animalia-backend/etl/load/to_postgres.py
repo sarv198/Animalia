@@ -23,7 +23,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from app.database import SessionLocal
-from app.models import Source, Species, Taxon
+from app.models import Occurrence, PhyloNode, PhylogenyEdge, Source, Species, Taxon
 
 SOURCE_NAME = "species_crossref"
 RANK_CLADE = "clade"
@@ -37,6 +37,8 @@ class LoadStats:
     taxa_updated: int = 0
     species_inserted: int = 0
     species_updated: int = 0
+    species_removed: int = 0
+    taxa_removed: int = 0
     flagged: int = 0
 
 
@@ -75,10 +77,15 @@ def get_or_create_taxon(
     """Look up a taxon by (scientific_name, rank) in the in-memory cache.
 
     The cache is preloaded from the database once. This helper never queries.
+    An existing taxon is moved under ``parent`` if the CSV now places it
+    elsewhere (e.g. a species reassigned to another family).
     """
     key = (scientific_name, rank)
     existing = cache.get(key)
     if existing is not None:
+        if existing.parent is not parent:
+            existing.parent = parent
+            stats.taxa_updated += 1
         return existing
 
     taxon = Taxon(
@@ -173,6 +180,7 @@ def load(csv_path: Path) -> LoadStats:
             if blank_to_none(row.get("review_flag")) is not None:
                 stats.flagged += 1
 
+        prune(db, rows, stats)
         db.commit()
     except Exception:
         db.rollback()
@@ -183,11 +191,51 @@ def load(csv_path: Path) -> LoadStats:
     return stats
 
 
+def prune(db, rows: list[dict[str, str]], stats: LoadStats) -> None:
+    """Delete species and taxa that are no longer in the CSV (e.g. a swapped
+    representative or a renamed family), so the database matches it exactly.
+
+    The phylogeny and occurrences point at species, so when anything is removed
+    the phylogeny is cleared too; etl/run_pipeline.py rebuilds it right after.
+    """
+    keep_species = {blank_to_none(r.get("species")) for r in rows}
+    keep_taxa = {
+        (blank_to_none(r.get(column)), rank)
+        for r in rows
+        for column, rank in (("clade_group", RANK_CLADE), ("family", RANK_FAMILY), ("species", RANK_SPECIES))
+    }
+    db.flush()
+    stale_species = [s for s in db.query(Species).all() if s.scientific_name not in keep_species]
+    stale_taxa = [
+        t for t in db.query(Taxon).all()
+        if t.taxonomic_source == SOURCE_NAME and (t.scientific_name, t.rank) not in keep_taxa
+    ]
+    if not stale_species and not stale_taxa:
+        return
+    db.query(PhylogenyEdge).delete()
+    db.query(PhyloNode).delete()
+    stale_ids = [s.id for s in stale_species]
+    if stale_ids:
+        db.query(Occurrence).filter(Occurrence.species_id.in_(stale_ids)).delete(synchronize_session=False)
+    for species in stale_species:
+        db.delete(species)
+    db.flush()
+    # Children before parents: species taxa, then families, then clades.
+    order = {RANK_SPECIES: 0, RANK_FAMILY: 1, RANK_CLADE: 2}
+    for taxon in sorted(stale_taxa, key=lambda t: order.get(t.rank, 3)):
+        db.delete(taxon)
+        db.flush()
+    stats.species_removed = len(stale_species)
+    stats.taxa_removed = len(stale_taxa)
+
+
 def print_stats(stats: LoadStats) -> None:
     print(f"taxa inserted: {stats.taxa_inserted}")
     print(f"taxa updated: {stats.taxa_updated}")
+    print(f"taxa removed: {stats.taxa_removed}")
     print(f"species inserted: {stats.species_inserted}")
     print(f"species updated: {stats.species_updated}")
+    print(f"species removed: {stats.species_removed}")
     print(f"flagged rows loaded: {stats.flagged}")
 
 

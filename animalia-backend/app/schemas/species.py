@@ -28,8 +28,24 @@ class SpeciesSummary(BaseModel):
     common_name: str | None = None
 
 
+class SpeciesImage(BaseModel):
+    """An openly licensed image, linked from its source with the credit to show."""
+
+    url: str
+    thumbnail_url: str | None = None
+    source: str  # Wikimedia Commons | GBIF
+    page_url: str | None = None
+    licence: str
+    licence_url: str | None = None
+    creator: str | None = None
+
+
 class SpeciesDetail(BaseModel):
-    """Species plus the family and clade/order it belongs to."""
+    """Species plus the family and clade/order it belongs to.
+
+    iucn_category is the IUCN Red List category as stated on the species'
+    Wikipedia page; iucn_source says so (with the retrieval date).
+    """
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,10 +53,14 @@ class SpeciesDetail(BaseModel):
     scientific_name: str
     common_name: str | None = None
     iucn_category: str | None = None
+    iucn_assessment_year: int | None = None
+    iucn_source: str | None = None
+    wikipedia_url: str | None = None
     gbif_taxon_id: int | None = None
     col_taxon_id: str | None = None
     ott_id: int | None = None
     taxonomy: Taxonomy
+    images: list[SpeciesImage] = []
 
     @model_validator(mode="before")
     @classmethod
@@ -53,10 +73,25 @@ class SpeciesDetail(BaseModel):
             "scientific_name": data.scientific_name,
             "common_name": data.common_name,
             "iucn_category": data.iucn_category,
+            "iucn_assessment_year": data.iucn_assessment_year,
+            "iucn_source": data.iucn_source,
+            "wikipedia_url": data.wikipedia_url,
             "gbif_taxon_id": data.gbif_taxon_id,
             "col_taxon_id": data.col_taxon_id,
             "ott_id": data.ott_id,
             "taxonomy": {"family": family, "clade_group": clade_group},
+            "images": [
+                {
+                    "url": m.image_url,
+                    "thumbnail_url": m.thumbnail_url,
+                    "source": m.source,
+                    "page_url": m.page_url,
+                    "licence": m.licence,
+                    "licence_url": m.licence_url,
+                    "creator": m.creator,
+                }
+                for m in (getattr(data, "media", None) or [])
+            ],
         }
 
 
