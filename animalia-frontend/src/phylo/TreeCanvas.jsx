@@ -15,6 +15,8 @@ import { displayName } from './labels.js'
 
 const PANEL_WIDTH = 440
 const MIN_LAYOUT_WIDTH = 980
+const KEEP_VISIBLE = 180 // px of the tree that always stays on screen
+const TIP_LABEL_ROOM = 150 // family names to the right of the tips
 const TRACE_STEP_S = 0.16
 
 // Opacity for living tips while the time lens approaches the present.
@@ -57,15 +59,75 @@ export default function TreeCanvas({
   const ready = geometry != null
 
   // Zoom and pan. The wheel pans (like a page); ctrl/cmd + wheel or a pinch zooms.
+  // Panning stops before the tree leaves the screen: part of it (not just the
+  // empty margin or a blank corner of its box) always stays in view, at any zoom.
   useEffect(() => {
     const svg = svgRef.current
-    if (!ready || !svg) return undefined
+    if (!ready || !svg || !geometry) return undefined
+    const tree = {
+      x0: MARGIN.left,
+      x1: geometry.width - MARGIN.right + TIP_LABEL_ROOM,
+      y0: MARGIN.top,
+      y1: geometry.height - MARGIN.bottom,
+    }
+    // Points along every branch, in the zoomed layer's coordinates.
+    const points = []
+    for (const { source, target } of model.root.links()) {
+      const a = geometry.positions.get(source.data.id)
+      const b = geometry.positions.get(target.data.id)
+      const endX = b.barEnd ?? b.x
+      for (let i = 0; i <= 4; i++) {
+        points.push([MARGIN.left + a.x + ((endX - a.x) * i) / 4, MARGIN.top + b.y])
+        points.push([MARGIN.left + a.x, MARGIN.top + a.y + ((b.y - a.y) * i) / 4])
+      }
+    }
+    const showsTree = (t, [[vx0, vy0], [vx1, vy1]]) => points.some(([px, py]) => {
+      const x = t.applyX(px)
+      const y = t.applyY(py)
+      return x > vx0 + 30 && x < vx1 - 30 && y > vy0 + 30 && y < vy1 - 30
+    })
+    const clampToBox = (t, extent) => {
+      const [[vx0, vy0], [vx1, vy1]] = extent
+      const keepX = Math.min(KEEP_VISIBLE, (vx1 - vx0) * 0.3)
+      const keepY = Math.min(KEEP_VISIBLE, (vy1 - vy0) * 0.3)
+      let { x, y } = t
+      const left = x + tree.x0 * t.k
+      const right = x + tree.x1 * t.k
+      const top = y + tree.y0 * t.k
+      const bottom = y + tree.y1 * t.k
+      if (right < vx0 + keepX) x += vx0 + keepX - right
+      else if (left > vx1 - keepX) x -= left - (vx1 - keepX)
+      if (bottom < vy0 + keepY) y += vy0 + keepY - bottom
+      else if (top > vy1 - keepY) y -= top - (vy1 - keepY)
+      return x === t.x && y === t.y ? t : d3.zoomIdentity.translate(x, y).scale(t.k)
+    }
+    // A move that would leave only blank space on screen goes only as far as
+    // it can while some of the tree is still showing.
+    const constrain = (t, extent) => {
+      const boxed = clampToBox(t, extent)
+      if (showsTree(boxed, extent)) return boxed
+      const current = d3.zoomTransform(svg)
+      if (!showsTree(current, extent)) return boxed
+      const at = (f) => d3.zoomIdentity
+        .translate(current.x + (boxed.x - current.x) * f, current.y + (boxed.y - current.y) * f)
+        .scale(current.k + (boxed.k - current.k) * f)
+      let lo = 0
+      let hi = 1
+      for (let i = 0; i < 10; i++) {
+        const mid = (lo + hi) / 2
+        if (showsTree(at(mid), extent)) lo = mid
+        else hi = mid
+      }
+      return at(lo)
+    }
     const zoom = d3
       .zoom()
       .scaleExtent([0.2, 4])
+      .constrain(constrain)
       .filter((event) => (event.type === 'wheel' ? event.ctrlKey || event.metaKey : !event.button))
       .on('zoom', (event) => setTransform(event.transform))
     const selection = d3.select(svg).call(zoom).on('dblclick.zoom', null)
+    zoom.translateBy(selection, 0, 0) // pull the current view back in bounds (e.g. after a layout change)
     zoomRef.current = { zoom, selection }
     const onWheel = (event) => {
       if (event.ctrlKey || event.metaKey) return
@@ -79,7 +141,7 @@ export default function TreeCanvas({
       selection.on('.zoom', null)
       zoomRef.current = null
     }
-  }, [ready])
+  }, [ready, geometry, model])
 
   const animateTo = useCallback(
     (box, { maxScale = 1.6, leaveRoomForPanel = false } = {}) => {
@@ -287,7 +349,7 @@ export default function TreeCanvas({
                   className="hit"
                   tabIndex={0}
                   role="button"
-                  aria-label={`${displayName(d)} — details`}
+                  aria-label={`${displayName(d)}, details`}
                   onMouseMove={(event) => hoverAt(event, d.id)}
                   onClick={() => onSelect(d.id)}
                   onKeyDown={(event) => event.key === 'Enter' && onSelect(d.id)}
@@ -338,7 +400,7 @@ export default function TreeCanvas({
                   return (
                     <g key={period.name}>
                       <rect x={x0} y={-MARGIN.top + 18} width={Math.max(x1 - x0, 0)} height={innerHeight + MARGIN.top + MARGIN.bottom - 30} fill={period.tone}>
-                        <title>{`${period.name} (${period.start}–${period.end} million years ago)`}</title>
+                        <title>{`${period.name} (${period.start} to ${period.end} million years ago)`}</title>
                       </rect>
                       <line x1={x1} x2={x1} y1={-MARGIN.top + 18} y2={innerHeight + 30} className="stratum-edge" />
                       {(x1 - x0) * k > period.name.length * 8 + 16 && (
@@ -446,7 +508,7 @@ export default function TreeCanvas({
                         className="hit"
                         tabIndex={lensOpacity ? 0 : -1}
                         role="button"
-                        aria-label={`${displayName(d)} — details`}
+                        aria-label={`${displayName(d)}, details`}
                         onMouseMove={(event) => hoverAt(event, d.id)}
                         onClick={() => onSelect(d.id)}
                         onKeyDown={(event) => event.key === 'Enter' && onSelect(d.id)}

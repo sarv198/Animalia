@@ -11,7 +11,7 @@ docker compose up -d
 # Install deps
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements-dev.txt   # app deps + pytest/httpx
+pip install -r requirements-dev.txt   # API + pipeline deps + pytest/httpx (the API alone needs only requirements.txt)
 
 # Configure env
 cp .env.example .env
@@ -112,6 +112,27 @@ category, labelled as such with the retrieval date. Wikimedia requires API
 clients to give a contact: set `WIKIMEDIA_CONTACT` (a URL or email) in `.env`;
 it defaults to the project's GitHub URL. Re-fetch with `--refresh-media`.
 
+### Range maps, species counts and descriptions
+
+Pipeline step 8 fills two tables, served on click by `GET /api/phylogeny/profile/{name}`:
+
+- `family_profiles`: each family's species count (from the Reptile Database
+  checklist) and its range map. A family's range is the union of the
+  [GARD 1.7](https://doi.org/10.5061/dryad.9cnp5hqmb) range polygons of its
+  species (Roll & Meiri 2022, CC0; cite Roll et al. 2017 and Caetano et al.
+  2022), simplified to about 0.1 degree; the representative species' own range is
+  kept too. GARD covers land reptiles only, so marine families have no polygon;
+  the site then maps the representative species' GBIF occurrence records.
+- `taxon_summaries`: a few sentences per named family, clade or group from the
+  English Wikipedia page summary (CC BY-SA 4.0, shown with its link and
+  licence; dashes replaced). Cached in `data/raw/media/summaries.json`.
+
+**GARD must be downloaded by hand** (Dryad serves it only through its website,
+858 MB): open https://doi.org/10.5061/dryad.9cnp5hqmb, download the dataset,
+and unzip the `Gard_1_7_ranges.*` files into `data/raw/gard/`. Then rerun
+`python etl/run_pipeline.py`. Without it the step logs a warning and skips the
+ranges (ranges already in the database are kept).
+
 ### Reptile Database checklist
 
 The checklist is the authority for family names and family membership: the
@@ -145,6 +166,8 @@ Cite it as (the accessed date is when the checklist was downloaded;
 | The Reptile Database | `etl/extract/reptiledb.py` | Family names and membership (Uetz et al. 2026); used by the family check |
 | Wikipedia / Wikimedia Commons | `etl/extract/media.py` | Species article, lead image (with licence), IUCN category as stated in the infobox |
 | GBIF occurrence media | `etl/extract/media.py` | Openly licensed species photos (mostly iNaturalist) |
+| GARD 1.7 | `etl/transform/ranges.py` | Species range polygons, merged into family ranges (Roll & Meiri 2022, CC0) |
+| Wikipedia page summaries | `etl/extract/summaries.py` | Short descriptions of families, clades and groups (CC BY-SA 4.0) |
 | GBIF | `etl/extract/gbif.py` | Occurrences / names |
 | IUCN | `etl/extract/iucn.py` | Live lookup only — check licensing before redistribution |
 

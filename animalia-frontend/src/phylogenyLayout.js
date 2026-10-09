@@ -88,7 +88,7 @@ export function layoutTree(model, width, mode) {
 }
 
 export function formatAge(age) {
-  if (age == null) return '—'
+  if (age == null) return 'unknown'
   if (age === 0) return 'today'
   return age >= 100 ? `${Math.round(age)}` : `${Number(age.toFixed(1))}`
 }

@@ -239,7 +239,9 @@
 }
 
 /* Gives way to a broader or emphasised plaque that would overlap it on screen */
-.world-plaque.crowded {
+.world-plaque.crowded,
+.world-portrait.crowded,
+.world-family.crowded {
   visibility: hidden;
 }
 
@@ -310,6 +312,13 @@
   font-size: 12px;
 }
 
+.portrait-family {
+  color: var(--phylo-sandstone);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .world-portrait em {
   color: var(--phylo-limestone);
   font-size: 10.5px;
@@ -318,6 +327,10 @@
 .world-portrait small {
   color: var(--phylo-stone);
   font-size: 8.5px;
+}
+
+.world-family.with-portrait {
+  visibility: hidden;
 }
 
 .world-period {
@@ -346,6 +359,15 @@
 }
 
 /* Museum mode: exhibit plaques, revealed one after another */
+
+.world-labels {
+  transition: opacity 0.8s ease;
+}
+
+/* The entrance title stands alone; the labels arrive after it */
+.world-stage.intro .world-labels {
+  opacity: 0;
+}
 
 .world-labels.museum .world-plaque {
   padding: 0.35rem 0.8rem 0.4rem;
@@ -1007,6 +1029,14 @@
 
 /* Small screens: selected-family exploration first */
 
+/* With a side panel open, bars centre in the space left of it */
+@media (min-width: 961px) {
+  .world-stage.panel-open .world-tour {
+    left: calc((100% - 420px) / 2);
+    width: min(40rem, calc(100% - 420px - 2.5rem));
+  }
+}
+
 @media (max-width: 960px) {
   .world-header {
     padding: 0.75rem 1rem;
@@ -1024,12 +1054,12 @@
     flex: 1 1 100%;
   }
 
-  .world-controls > button.quiet {
-    display: none;
+  .world-key {
+    max-width: calc(100% - 2rem);
   }
 
-  .world-key {
-    display: none;
+  .world-encoding {
+    font-size: 0.72rem;
   }
 
   .world-scale {
@@ -1054,6 +1084,12 @@
 
   .world-tour {
     bottom: 0.75rem;
+  }
+
+  /* Keep the name in view above the fold of the sheet */
+  .world-card .card-photo img {
+    aspect-ratio: 16 / 9;
+    max-height: 20vh;
   }
 }
 

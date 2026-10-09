@@ -237,16 +237,17 @@ export default function TreeOfLife3D() {
     <div className={`world-page${museum ? ' museum' : ''}`}>
       <header className="world-header">
         <div className="world-titles">
-          <p className="world-eyebrow">Reptilia · the tree of life in three dimensions</p>
-          <h1>Tree of Life</h1>
+          <h1>Reptilia Family Tree</h1>
         </div>
         {status === 'ready' && world && (
           <div className="world-controls">
             <SearchBox world={world} onSelect={(id) => (pickingCompare ? onPick(id) : select(id))} />
             <button type="button" onClick={() => engineRef.current?.resetView()}>Reset view</button>
+            {/* Focus selected: hidden for now (the card's own Focus button remains).
             <button type="button" onClick={() => selectedId != null && engineRef.current?.focusNode(selectedId)} disabled={selectedId == null}>
               Focus selected
             </button>
+            */}
             <button type="button" onClick={() => startTour('journey')}>Explore evolution</button>
             {museum ? (
               <button type="button" onClick={exploreFreely}>Explore freely</button>
@@ -261,11 +262,11 @@ export default function TreeOfLife3D() {
       {status === 'loading' && <p className="world-status">Growing the tree…</p>}
       {status === 'error' && (
         <p className="world-status world-error" role="alert">
-          Could not reach the Animalia API at {API_BASE_URL}. {error}
+          Could not reach the data API at {API_BASE_URL}. {error}
         </p>
       )}
 
-      <div className="world-stage">
+      <div className={`world-stage${panelOpen ? ' panel-open' : ''}${museumIntro ? ' intro' : ''}`}>
         {/* The engine owns this element (canvas + label layer); React owns the overlays. */}
         <div className="world-host" ref={containerRef} />
         {status === 'ready' && world && (
@@ -273,12 +274,12 @@ export default function TreeOfLife3D() {
             <ScaleTrail world={world} scale={scale} />
             <div className="world-key">
               <p className="world-encoding">
-                <strong>Height</strong> is time — the deepest branches are the oldest. <strong>Angle</strong> follows the
+                <strong>Height</strong> is time: the deepest branches are the oldest. <strong>Angle</strong> follows the
                 branching order. Distance across the scene is not genetic distance.
               </p>
               <Key timeScaled startOpen={false} help="Drag to orbit · right-drag to pan · scroll to zoom · click a family or branch point" />
             </div>
-            {pickingCompare && <p className="world-hint">Choose a second family or clade to compare with — click it in the tree or search for it.</p>}
+            {pickingCompare && <p className="world-hint">Choose a second family or clade to compare with. Click it in the tree or search for it.</p>}
             {hover && hover.id !== selectedId && !tour && (
               <DiscoveryChip world={world} hover={hover} museum={museum} stageWidth={window.innerWidth} />
             )}
@@ -311,7 +312,7 @@ export default function TreeOfLife3D() {
                 onExit={exitTour}
               />
             )}
-            {follow && !tour && <FollowBar follow={follow} onExit={endFollow} />}
+            {follow && !tour && <FollowBar world={world} follow={follow} onExit={endFollow} />}
             {museumIntro && <MuseumIntro world={world} onTour={() => startTour('museum')} onFree={exploreFreely} />}
           </>
         )}

@@ -207,7 +207,7 @@ export default function Phylogeny() {
       {status === 'loading' && <p className="phylo-status">Loading the tree…</p>}
       {status === 'error' && (
         <p className="phylo-status phylo-error" role="alert">
-          Could not reach the Animalia API at {API_BASE_URL}. {error}
+          Could not reach the data API at {API_BASE_URL}. {error}
         </p>
       )}
 

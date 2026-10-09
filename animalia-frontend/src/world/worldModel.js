@@ -14,27 +14,15 @@
 import * as d3 from 'd3'
 import { formatAge } from '../phylogenyLayout.js'
 import { majorClade } from '../phylogenyStyle.js'
+import {
+  PLAIN_NAMES, capitalise, cladeStory, familyStory, list, relativesPhrase, relativesWord, speciesCountLine, whenPhrase,
+} from '../phylo/narrative.js'
 
 export const WORLD = { radius: 150, height: 300, gap: 0.08 }
 
 // Plain-language names for clades that exist in the data (only these get
-// exhibit labels).
-export const EXHIBIT_NAMES = {
-  Reptilia: 'Reptiles',
-  Lepidosauria: 'Lepidosaurs',
-  Squamata: 'Squamates',
-  Serpentes: 'Snakes',
-  Iguania: 'Iguanians',
-  Anguimorpha: 'Anguimorphs',
-  Lacertoidea: 'Lacertoids',
-  Amphisbaenia: 'Amphisbaenians',
-  Scinciformata: 'Skinks & allies',
-  Gekkota: 'Geckos',
-  Testudines: 'Turtles',
-  Crocodylia: 'Crocodilians',
-  Archosauria: 'Archosaurs',
-  Dinosauria: 'Dinosaurs',
-}
+// exhibit labels); shared with the 2D page.
+export const EXHIBIT_NAMES = PLAIN_NAMES
 
 // Stops for the "Explore evolution" journey and the museum tour. Only nodes
 // present in the data are used; captions are generated from the data.
@@ -252,30 +240,23 @@ export function lineageSteps(world, id) {
 // A caption for a clade stop, from the data only.
 export function cladeCaption(node) {
   const d = node.data
-  const lines = []
-  const range = d.age_ci_low != null && d.age_ci_high != null ? ` (95% range ${formatAge(d.age_ci_low)}–${formatAge(d.age_ci_high)})` : ''
-  if (d.age_ma != null) lines.push(`Last common ancestor about ${formatAge(d.age_ma)} million years ago${range}.`)
-  lines.push(`${familyCount(node)} families in this tree.`)
-  const sisters = node.parent ? node.parent.children.filter((c) => c !== node) : []
-  if (sisters.length) lines.push(`Closest relatives: ${sisters.map(describe).join('; ')}.`)
-  return { title: EXHIBIT_NAMES[d.name] ?? d.name, subtitle: EXHIBIT_NAMES[d.name] ? d.name : null, lines }
+  return { title: EXHIBIT_NAMES[d.name] ?? d.name, subtitle: EXHIBIT_NAMES[d.name] ? d.name : null, lines: cladeStory(node) }
 }
 
 // The one fact shown on a specimen plaque: who it is closest to, and when they
-// parted — derived from the tree.
+// parted, derived from the tree.
 export function specimenFact(node) {
   const sisters = node.parent ? node.parent.children.filter((c) => c !== node) : []
   if (!sisters.length) return null
-  return `Closest relatives in this tree: ${sisters.map(describe).join('; ')} — their lineages parted about ${formatAge(node.parent.data.age_ma)} million years ago.`
+  const age = node.parent.data.age_ma
+  const when = age != null ? ` The two lineages parted about ${formatAge(age)} million years ago, ${whenPhrase(age, node)}.` : ''
+  return `${capitalise(`its ${relativesWord(sisters)}`)} are ${list(sisters.map(relativesPhrase))}.${when}`
 }
 
 export function familyCaption(node) {
   const d = node.data
   const species = d.representative_species
-  const lines = []
-  if (d.stem_age_ma != null) lines.push(`Its lineage split off about ${formatAge(d.stem_age_ma)} million years ago.`)
-  const fact = specimenFact(node)
-  if (fact) lines.push(fact)
+  const lines = [speciesCountLine(d), ...familyStory(node)].filter(Boolean)
   return {
     title: d.name,
     subtitle: species ? `${species.common_name ? `${species.common_name} · ` : ''}${species.scientific_name}` : null,

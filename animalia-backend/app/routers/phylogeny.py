@@ -5,8 +5,15 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
-from app.models import PhyloNode, PhylogenyEdge, Source, Species, Taxon
-from app.schemas.phylogeny import PhyloTreeNode, RepresentativeSpecies
+from app.models import FamilyProfile, PhyloNode, PhylogenyEdge, Source, Species, Taxon, TaxonSummary
+from app.schemas.phylogeny import (
+    NodeProfile,
+    OccurrenceMap,
+    PhyloTreeNode,
+    RangeMap,
+    RepresentativeSpecies,
+    TaxonText,
+)
 from app.schemas.species import SpeciesImage
 
 router = APIRouter(prefix="/api/phylogeny", tags=["phylogeny"])
@@ -20,7 +27,7 @@ def _kind(node: PhyloNode) -> str:
     return "clade"
 
 
-def _to_schema(node: PhyloNode) -> PhyloTreeNode:
+def _to_schema(node: PhyloNode, species_counts: dict[str, int] | None = None) -> PhyloTreeNode:
     family = node.family_taxon
     clade_group = family.parent.scientific_name if family and family.parent else None
     species = node.species
@@ -43,6 +50,7 @@ def _to_schema(node: PhyloNode) -> PhyloTreeNode:
             else None
         ),
         placement_status=node.placement_status,
+        species_count=(species_counts or {}).get(node.label) if species else None,
         extinct=node.extinct,
         placement_uncertain=node.placement_uncertain,
         anapsid_skull=node.anapsid_skull,
@@ -78,13 +86,15 @@ def _first_image(species: Species) -> SpeciesImage | None:
 
 
 def build_phylogeny_tree(
-    nodes: list[PhyloNode], edges: list[PhylogenyEdge]
+    nodes: list[PhyloNode],
+    edges: list[PhylogenyEdge],
+    species_counts: dict[str, int] | None = None,
 ) -> PhyloTreeNode | None:
     """Nest already-loaded nodes by their edges and return the root.
 
     Children keep load order (edge id), which preserves Open Tree's ordering.
     """
-    built = {node.id: _to_schema(node) for node in nodes}
+    built = {node.id: _to_schema(node, species_counts) for node in nodes}
     has_parent: set[int] = set()
     for edge in sorted(edges, key=lambda e: e.id):
         parent, child = built[edge.parent_node_id], built[edge.child_node_id]
@@ -127,7 +137,61 @@ def get_reptile_phylogeny(db: Session = Depends(get_db)) -> PhyloTreeNode:
             status_code=404,
             detail="Phylogeny not loaded. Run: python etl/run_pipeline.py",
         )
-    root = build_phylogeny_tree(nodes, db.query(PhylogenyEdge).all())
+    species_counts = {
+        p.family: p.species_count for p in db.query(FamilyProfile).all() if p.species_count is not None
+    }
+    root = build_phylogeny_tree(nodes, db.query(PhylogenyEdge).all(), species_counts)
     if root is None:
         raise HTTPException(status_code=500, detail="Phylogeny does not have a single root")
     return root
+
+
+@router.get("/profile/{name}", response_model=NodeProfile)
+def get_profile(name: str, db: Session = Depends(get_db)) -> NodeProfile:
+    """Description, species count and range map for a named family, clade or
+    group. Ranges are GARD 1.7 polygons; when a family has none, `occurrences`
+    names the representative species so GBIF records can be mapped instead."""
+    node = (
+        db.query(PhyloNode)
+        .options(joinedload(PhyloNode.species))
+        .filter(PhyloNode.label == name)
+        .first()
+    )
+    if node is None:
+        raise HTTPException(status_code=404, detail=f"No node named {name!r} in the tree")
+    summary = db.query(TaxonSummary).filter(TaxonSummary.name == name).first()
+    profile = db.query(FamilyProfile).filter(FamilyProfile.family == name).first()
+    out = NodeProfile(
+        name=name,
+        summary=(
+            TaxonText(
+                text=summary.extract, title=summary.title, url=summary.url,
+                licence=summary.licence, licence_url=summary.licence_url,
+                range_text=summary.range_text, range_scope=summary.range_scope,
+                range_title=summary.range_title, range_url=summary.range_url,
+            )
+            if summary
+            else None
+        ),
+    )
+    if profile:
+        out.species_count = profile.species_count
+        out.checklist_release = profile.checklist_release
+        if profile.range_geojson:
+            out.family_range = RangeMap(
+                level="family", geojson=profile.range_geojson,
+                species_mapped=profile.range_species_mapped, species_total=profile.species_count,
+                source=profile.range_source, citation=profile.range_citation,
+            )
+        if profile.rep_range_geojson:
+            out.species_range = RangeMap(
+                level="species", geojson=profile.rep_range_geojson,
+                scientific_name=profile.rep_scientific_name,
+                source=profile.range_source, citation=profile.range_citation,
+            )
+    species = node.species
+    if species and species.gbif_taxon_id:
+        out.occurrences = OccurrenceMap(
+            gbif_taxon_key=species.gbif_taxon_id, scientific_name=species.scientific_name
+        )
+    return out

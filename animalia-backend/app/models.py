@@ -22,6 +22,7 @@ Design notes:
 from datetime import date, datetime
 
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Text, false, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -102,6 +103,54 @@ class SpeciesMedia(Base):
     licence: Mapped[str] = mapped_column(String(50))
     licence_url: Mapped[str | None] = mapped_column(Text)
     creator: Mapped[str | None] = mapped_column(Text)
+
+
+class TaxonSummary(Base):
+    """A short description of a named family, clade or group, from Wikipedia.
+
+    Keyed by the name shown in the tree (not a node id), because phylogeny
+    nodes are rebuilt on every run. The text is CC BY-SA and is shown with its
+    article link and licence; `extract` is lightly adapted (dashes replaced).
+    """
+    __tablename__ = "taxon_summaries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    title: Mapped[str] = mapped_column(String(255))  # the Wikipedia article
+    url: Mapped[str] = mapped_column(Text)
+    extract: Mapped[str] = mapped_column(Text)
+    revision: Mapped[str | None] = mapped_column(String(50))
+    licence: Mapped[str] = mapped_column(String(50))
+    licence_url: Mapped[str] = mapped_column(Text)
+    # Where the group lives, in a sentence or two. range_scope is 'group' when
+    # it comes from the same article, 'species' when from the representative
+    # species' article (range_title / range_url name the article used).
+    range_text: Mapped[str | None] = mapped_column(Text)
+    range_scope: Mapped[str | None] = mapped_column(String(20))
+    range_title: Mapped[str | None] = mapped_column(String(255))
+    range_url: Mapped[str | None] = mapped_column(Text)
+
+
+class FamilyProfile(Base):
+    """Facts about a family beyond its place in the tree.
+
+    species_count comes from The Reptile Database checklist. The range is the
+    union of the GARD 1.7 range polygons of the family's species (simplified,
+    GeoJSON, WGS84); rep_range is the representative species' own GARD range.
+    Either may be missing: GARD covers land reptiles only.
+    """
+    __tablename__ = "family_profiles"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    family: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    species_count: Mapped[int | None] = mapped_column()
+    checklist_release: Mapped[str | None] = mapped_column(String(50))
+    range_geojson: Mapped[dict | None] = mapped_column(JSONB)
+    range_species_mapped: Mapped[int | None] = mapped_column()
+    rep_scientific_name: Mapped[str | None] = mapped_column(String(255))
+    rep_range_geojson: Mapped[dict | None] = mapped_column(JSONB)
+    range_source: Mapped[str | None] = mapped_column(String(100))
+    range_citation: Mapped[str | None] = mapped_column(Text)
 
 
 class PhyloNode(Base):

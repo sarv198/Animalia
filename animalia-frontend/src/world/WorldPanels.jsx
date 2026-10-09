@@ -1,9 +1,14 @@
 import { formatAge } from '../phylogenyLayout.js'
 import { majorClade } from '../phylogenyStyle.js'
-import { ageRange, displayName } from '../phylo/labels.js'
-import { Conservation, Placement, SpeciesLinks, SpeciesPhotos } from '../phylo/SpeciesParts.jsx'
+import BirdsPanel from '../phylo/BirdsPanel.jsx'
+import { ageRange, dateSource, displayName } from '../phylo/labels.js'
+import { cladeStory, familyStory, pairStory } from '../phylo/narrative.js'
+// Range maps are hidden for now; the component is kept for later.
+// import RangeMap from '../phylo/RangeMap.jsx'
+import { Conservation, Placement, SpeciesCount, SpeciesLinks, SpeciesPhotos, WikiSummary } from '../phylo/SpeciesParts.jsx'
+import { useProfile } from '../phylo/useProfile.js'
 import { useSpecies } from '../phylo/useSpecies.js'
-import { EXHIBIT_NAMES, cladeCaption, comparison, describe, familyCount, neighbourhood } from './worldModel.js'
+import { EXHIBIT_NAMES, comparison, describe, familyCount, neighbourhood } from './worldModel.js'
 
 function cladeLabel(node) {
   const clade = majorClade(node)
@@ -18,6 +23,7 @@ export function SelectionCard({ world, id, museum, onSelect, onFollow, onCompare
   const d = item.data
   const { species, state } = useSpecies(d.kind === 'family' ? d.representative_species?.id : null)
   const n = neighbourhood(world, id)
+  const { profile } = useProfile(d.name)
 
   return (
     <aside className="world-card" aria-live="polite">
@@ -31,7 +37,7 @@ export function SelectionCard({ world, id, museum, onSelect, onFollow, onCompare
           <>
             <h2>{d.representative_species?.common_name || d.representative_species?.scientific_name}</h2>
             <p className="world-sci">
-              <em>{d.representative_species?.scientific_name}</em> — representative of <strong>{d.name}</strong>
+              <em>{d.representative_species?.scientific_name}</em>, the representative species of <strong>{d.name}</strong>
             </p>
           </>
         ) : (
@@ -48,9 +54,20 @@ export function SelectionCard({ world, id, museum, onSelect, onFollow, onCompare
         <button type="button" onClick={onFocus}>Focus</button>
       </div>
 
+      {d.name === 'Aves' && <WikiSummary summary={profile?.summary} heading="About birds" />}
+      {d.name === 'Aves' && <BirdsPanel node={item.node} />}
       {d.kind === 'family' && <Emerged node={item.node} />}
+      {d.kind === 'family' && <WikiSummary summary={profile?.summary} heading={`About ${d.name}`} />}
+      {/* Range map, hidden for now:
+      {d.kind === 'family' && profile && (
+        <RangeMap profile={profile} familyName={d.name} species={d.representative_species} />
+      )}
+      */}
       {d.kind === 'clade' && <CladeFacts node={item.node} />}
       {d.kind === 'group' && <GroupFacts node={item.node} />}
+      {d.kind !== 'family' && d.name !== 'Aves' && (
+        <WikiSummary summary={profile?.summary} heading={`About ${d.name || 'this group'}`} />
+      )}
       {n && <Neighbourhood n={n} world={world} onSelect={onSelect} />}
       {d.kind === 'family' && <Placement data={d} />}
       {d.kind === 'family' && state === 'ready' && species && <Conservation species={species} />}
@@ -65,32 +82,28 @@ function Emerged({ node }) {
   if (!parent) return null
   const range = ageRange(parent)
   return (
-    <section className="world-section">
-      <h3>When it emerged</h3>
-      <p>
-        Its lineage split from its closest relatives about <strong>{formatAge(node.data.stem_age_ma)}</strong> million
-        years ago{range ? ` (95% range ${range})` : ''}.
-      </p>
+    <section className="world-section story">
+      <h3>Its story</h3>
+      <SpeciesCount data={node.data} />
+      {familyStory(node).map((line) => <p key={line}>{line}</p>)}
       <p className="world-source">
-        Date: {parent.age_source}
-        {parent.age_study_count ? `, ${parent.age_study_count} studies` : ''}
-        {parent.age_citation ? ` — ${parent.age_citation}` : ''}
+        {range ? `Split date 95% range: ${range} million years ago. ` : ''}
+        {dateSource(parent)}
       </p>
     </section>
   )
 }
 
 function CladeFacts({ node }) {
-  const caption = cladeCaption(node)
   const d = node.data
+  const range = ageRange(d)
   return (
-    <section className="world-section">
-      <h3>This clade</h3>
-      {caption.lines.map((line) => <p key={line}>{line}</p>)}
+    <section className="world-section story">
+      <h3>Its story</h3>
+      {cladeStory(node).map((line) => <p key={line}>{line}</p>)}
       <p className="world-source">
-        Date: {d.age_source}
-        {d.age_study_count ? `, ${d.age_study_count} studies` : ''}
-        {d.age_citation ? ` — ${d.age_citation}` : ''}
+        {range ? `Date 95% range: ${range} million years ago. ` : ''}
+        {dateSource(d)}
       </p>
       {d.note && <p className="world-note">{d.note}</p>}
       {d.citation && <p className="world-source">{d.name ? 'Name and placement' : 'Placement'}: {d.citation}</p>}
@@ -154,13 +167,13 @@ function Neighbourhood({ n, world, onSelect }) {
         <ol className="hood-zones">
           <li>
             <strong>1 · Closest relatives</strong>
-            <span>{n.sisters.map(describe).join('; ') || '—'}</span>
+            <span>{n.sisters.map(describe).join('; ') || 'none'}</span>
             <Chips nodes={n.sisters} onSelect={onSelect} />
           </li>
           <li>
             <strong>2 · Broader clade</strong>
             <span>
-              {n.broader ? `${describe(n.broader)} — ${familyCount(n.broader)} families` : '—'}
+              {n.broader ? `${describe(n.broader)}, ${familyCount(n.broader)} families` : 'none'}
             </span>
           </li>
           <li>
@@ -170,7 +183,7 @@ function Neighbourhood({ n, world, onSelect }) {
         </ol>
       </div>
       <p className="world-aid">
-        An exploration aid showing how the tree nests — not a measure of genetic distance.
+        An exploration aid showing how the tree nests, not a measure of genetic distance.
       </p>
     </section>
   )
@@ -182,13 +195,6 @@ export function ComparePanel({ world, idA, idB, onSelect, onEnd }) {
   if (!c) return null
   const shared = c.shared?.data
   const range = shared ? ageRange(shared) : null
-  const path = (end) => {
-    const steps = []
-    for (let current = end; current && current !== c.shared; current = current.parent) {
-      if (current.data.name) steps.push(current.data.name)
-    }
-    return steps
-  }
   return (
     <aside className="world-compare" aria-live="polite">
       <p className="world-kicker">Shared evolutionary context</p>
@@ -197,20 +203,16 @@ export function ComparePanel({ world, idA, idB, onSelect, onEnd }) {
         <span>and</span>
         <button type="button" onClick={() => onSelect(idB)}>{c.b.data.name || 'Unnamed'}</button>
       </h2>
+      <div className="story">
+        {pairStory(c.a, c.b, c.shared).map((line) => <p key={line}>{line}</p>)}
+      </div>
+      {c.named && c.named.data !== shared && <p>Both belong to <strong>{describe(c.named)}</strong> ({familyCount(c.named)} families).</p>}
       {shared && (
-        <p>
-          Last shared ancestor: <strong>{shared.name || 'an unnamed ancestor'}</strong>, about{' '}
-          <strong>{formatAge(shared.age_ma)}</strong> million years ago{range ? ` (95% range ${range})` : ''}.
+        <p className="world-source">
+          {range ? `Shared ancestor date 95% range: ${range} million years ago. ` : ''}
+          {dateSource(shared)}
         </p>
       )}
-      {c.named && c.named.data !== shared && <p>Both belong to <strong>{describe(c.named)}</strong> ({familyCount(c.named)} families).</p>}
-      <div className="compare-paths">
-        {[c.a, c.b].map((end) => (
-          <p key={end.data.id}>
-            <span>{end.data.name}</span> → {[...path(end).slice(1), shared?.name || 'shared ancestor'].join(' → ')}
-          </p>
-        ))}
-      </div>
       <button type="button" className="world-end" onClick={onEnd}>End comparison</button>
     </aside>
   )

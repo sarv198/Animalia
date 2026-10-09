@@ -1,7 +1,12 @@
 import { closestRelatives, formatAge, lineageTrail } from '../phylogenyLayout.js'
 import { majorClade } from '../phylogenyStyle.js'
-import { ageRange, displayName } from './labels.js'
-import { Conservation, Placement, SpeciesLinks, SpeciesPhotos } from './SpeciesParts.jsx'
+import BirdsPanel from './BirdsPanel.jsx'
+import { ageRange, dateSource, displayName } from './labels.js'
+import { cladeStory, familyStory } from './narrative.js'
+// Range maps are hidden for now; the component is kept for later.
+// import RangeMap from './RangeMap.jsx'
+import { Conservation, Placement, SpeciesCount, SpeciesLinks, SpeciesPhotos, WikiSummary } from './SpeciesParts.jsx'
+import { useProfile } from './useProfile.js'
 import { useSpecies } from './useSpecies.js'
 
 export default function DetailCard({
@@ -10,6 +15,7 @@ export default function DetailCard({
   const d = node.data
   const kind = d.kind === 'family' ? 'Family' : d.kind === 'group' ? 'Group' : 'Clade'
   const { species, state } = useSpecies(d.kind === 'family' ? d.representative_species?.id : null)
+  const { profile } = useProfile(d.name)
   return (
     <aside className="detail-card" aria-live="polite">
       <button type="button" className="card-close" onClick={onClose} aria-label="Close details">
@@ -35,9 +41,19 @@ export default function DetailCard({
         </div>
       )}
 
+      {d.name === 'Aves' && <WikiSummary summary={profile?.summary} heading="About birds" />}
+      {d.name === 'Aves' && <BirdsPanel node={node} />}
       {d.kind === 'family' && <Emergence node={node} />}
+      {d.kind === 'family' && <WikiSummary summary={profile?.summary} heading={`About ${d.name}`} />}
+      {/* Range map, hidden for now:
+      {d.kind === 'family' && profile && (
+        <RangeMap profile={profile} familyName={d.name} species={d.representative_species} />
+      )}
+      */}
       {d.kind === 'group' && <GroupDetails node={node} />}
+      {d.kind === 'group' && d.name !== 'Aves' && <WikiSummary summary={profile?.summary} heading={`About ${d.name}`} />}
       {d.kind === 'clade' && <CladeDetails node={node} />}
+      {d.kind === 'clade' && <WikiSummary summary={profile?.summary} heading={`About ${d.name}`} />}
       <Relatives node={node} onSelect={onSelect} />
       <LineageTrail node={node} traceToken={traceToken} onSelect={onSelect} />
       {d.kind === 'family' && state === 'ready' && species && <Conservation species={species} />}
@@ -59,7 +75,7 @@ function FamilyHead({ node, kind, species, state }) {
         <h2 className="card-title">{d.representative_species?.common_name || d.representative_species?.scientific_name}</h2>
         <p className="card-scientific">
           <em>{d.representative_species?.scientific_name}</em>
-          <span className="card-role"> — representative species of {d.name}</span>
+          <span className="card-role">, the representative species of {d.name}</span>
         </p>
       </header>
       {state === 'loading' && <p className="card-muted">Loading species…</p>}
@@ -73,16 +89,13 @@ function Emergence({ node }) {
   if (!parent) return null
   const range = ageRange(parent)
   return (
-    <section className="card-section">
-      <h3>When it emerged</h3>
-      <p>
-        Its lineage split from its closest relatives about <strong>{formatAge(node.data.stem_age_ma)}</strong>{' '}
-        million years ago{range ? ` (95% range ${range})` : ''}.
-      </p>
+    <section className="card-section story">
+      <h3>Its story</h3>
+      <SpeciesCount data={node.data} />
+      {familyStory(node).map((line) => <p key={line}>{line}</p>)}
       <p className="card-source">
-        Date: {parent.age_source}
-        {parent.age_study_count ? `, ${parent.age_study_count} studies` : ''}
-        {parent.age_citation ? ` — ${parent.age_citation}` : ''}
+        {range ? `Split date 95% range: ${range} million years ago. ` : ''}
+        {dateSource(parent)}
       </p>
     </section>
   )
@@ -139,15 +152,12 @@ function CladeDetails({ node }) {
           {tips.length > 4 ? '…' : ''}
         </p>
       </section>
-      <section className="card-section">
-        <h3>When it lived</h3>
-        <p>
-          About <strong>{formatAge(d.age_ma)}</strong> million years ago{range ? ` (95% range ${range})` : ''}.
-        </p>
+      <section className="card-section story">
+        <h3>Its story</h3>
+        {cladeStory(node).map((line) => <p key={line}>{line}</p>)}
         <p className="card-source">
-          Date: {d.age_source}
-          {d.age_study_count ? `, ${d.age_study_count} studies` : ''}
-          {d.age_citation ? ` — ${d.age_citation}` : ''}
+          {range ? `Date 95% range: ${range} million years ago. ` : ''}
+          {dateSource(d)}
         </p>
         {adjustment && <p className="card-note">{adjustment}</p>}
       </section>
@@ -184,9 +194,9 @@ function Relatives({ node, onSelect }) {
           </li>
         ))}
       </ul>
-      <p className="card-source">
-        Shared ancestor about {formatAge(node.parent.data.age_ma)} million years ago.
-      </p>
+      {node.parent.data.name && (
+        <p className="card-source">Together they make up {node.parent.data.name}.</p>
+      )}
     </section>
   )
 }

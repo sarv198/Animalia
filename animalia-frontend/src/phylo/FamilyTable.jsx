@@ -37,7 +37,7 @@ export default function FamilyTable({ model, selectedId, onSelect }) {
                   <span className="swatch" style={{ background: clade.color }} aria-hidden="true" />
                   {clade.name || 'Other'}
                 </td>
-                <td><em>{d.representative_species?.scientific_name || '—'}</em></td>
+                <td><em>{d.representative_species?.scientific_name || 'n/a'}</em></td>
                 <td className="num">{formatAge(d.stem_age_ma)}</td>
                 <td>{d.kind === 'family' ? d.placement_status : d.extinct ? 'extinct group' : 'living group'}</td>
               </tr>

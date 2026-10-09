@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "animalia-frontend", "run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "frontend-3000",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "animalia-frontend", "run", "dev", "--", "--port", "3000", "--strictPort"],
+      "port": 3000
     }
   ]
 }

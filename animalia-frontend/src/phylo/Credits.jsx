@@ -44,7 +44,7 @@ export default function Credits({ onClose }) {
             published literature (shown in the details of each group).
           </li>
           <li>
-            Divergence dates: TimeTree 5{version('TimeTree 5') ? ` (data version ${version('TimeTree 5')})` : ''} —
+            Divergence dates: TimeTree 5{version('TimeTree 5') ? ` (data version ${version('TimeTree 5')})` : ''},
             Kumar et al. 2022, Mol Biol Evol 39:msac174,{' '}
             <a href="https://timetree.org" target="_blank" rel="noreferrer">timetree.org</a>; fossil dates curated
             from the literature and checked against the Paleobiology Database.
@@ -70,6 +70,23 @@ export default function Credits({ onClose }) {
             Conservation status: the IUCN Red List category as listed on each species' Wikipedia page. For
             official assessments see{' '}
             <a href="https://www.iucnredlist.org" target="_blank" rel="noreferrer">the IUCN Red List</a>.
+          </li>
+          {/* Range maps are hidden for now; restore this credit with them.
+          <li>
+            Range maps:{' '}
+            <cite>
+              Roll, U. &amp; Meiri, S. (2022) GARD 1.7, updated global distributions for all terrestrial reptiles,{' '}
+              <a href="https://doi.org/10.5061/dryad.9cnp5hqmb" target="_blank" rel="noreferrer">Dryad</a>
+            </cite>{' '}
+            (CC0; Roll et al. 2017, Nat Ecol Evol 1:1677-1682; Caetano et al. 2022, PLoS Biol). A family's range
+            combines the ranges of its species. Where no range exists, the map shows occurrence records of the
+            representative species from{' '}
+            <a href="https://www.gbif.org" target="_blank" rel="noreferrer">GBIF.org</a>. Basemap: Natural Earth (public domain).
+          </li>
+          */}
+          <li>
+            Descriptions of families and clades, and where they live: adapted from Wikipedia (CC BY-SA 4.0),
+            each linked to its article. Other descriptions are written from the tree's own data.
           </li>
           <li>
             Identifiers and links: GBIF, Catalogue of Life, Open Tree of Life, Wikipedia.

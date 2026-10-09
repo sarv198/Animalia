@@ -12,7 +12,11 @@ Steps:
   6. load                       (-> phylo_nodes, phylogeny_edges)
   7. media                      (images from Wikimedia Commons + GBIF, IUCN
                                  status from Wikipedia; cached in data/raw/media/)
-  8. validation
+  8. profiles                   (species counts from The Reptile Database,
+                                 family range maps from GARD 1.7 when its
+                                 shapefile is in data/raw/gard/, and Wikipedia
+                                 summaries cached in data/raw/media/)
+  9. validation
 """
 
 from __future__ import annotations
@@ -28,14 +32,16 @@ if str(ROOT) not in sys.path:
 from etl.config import OPENTREE_RAW_DIR
 import requests
 
-from etl.extract import media, opentree
+from etl.extract import media, opentree, reptiledb, summaries
 from etl.extract.timetree import TimeTreeClient
 from etl.load.phylogeny_to_postgres import load as load_phylogeny
 from etl.load.media_to_postgres import load as load_media
 from etl.load.media_to_postgres import print_stats as print_media_stats
 from etl.load.phylogeny_to_postgres import print_stats as print_phylogeny_stats
+from etl.load.profiles_to_postgres import load as load_profiles
+from etl.load.profiles_to_postgres import print_stats as print_profile_stats
 from etl.load.to_postgres import load, print_stats
-from etl.transform import build_phylogeny, date_phylogeny, family_check
+from etl.transform import build_phylogeny, date_phylogeny, family_check, ranges
 from etl.validate.checks import ValidationError, run as run_checks
 
 DEFAULT_CSV = ROOT / "species_crossref.csv"
@@ -79,7 +85,7 @@ def main() -> None:
     parser.add_argument(
         "--refresh-media",
         action="store_true",
-        help="re-fetch images and Wikipedia IUCN status for every species",
+        help="re-fetch images, Wikipedia IUCN status and Wikipedia summaries",
     )
     parser.add_argument(
         "--refresh-timetree",
@@ -124,6 +130,30 @@ def main() -> None:
         print(f"media fetch failed ({exc}); loading what is cached")
         species_media = media.cached(rows)
     print_media_stats(load_media(species_media), len(rows))
+
+    checklist_path = reptiledb.checklist_path()
+    checklist = reptiledb.read_checklist(checklist_path)
+    species_family = {ranges.normalise(s): f for s, f in zip(checklist["species"], checklist["family"])}
+    representatives = {row["family"].strip(): row["species"].strip() for row in rows}
+    family_ranges = ranges.run(sorted(checks), species_family, representatives)
+    names = sorted({r.family or r.label for r in build.records if r.family or r.label})
+    try:
+        species_articles = {
+            row["family"].strip(): (wiki["title"], wiki["url"])
+            for row in rows
+            if (wiki := (species_media.get(row["species"].strip()) or {}).get("wikipedia"))
+        }
+        taxon_summaries = summaries.extract(names, refresh=args.refresh_media, species_articles=species_articles)
+    except requests.RequestException as exc:  # enrichment only: keep going
+        print(f"summary fetch failed ({exc}); loading what is cached")
+        cache = summaries.cached()
+        taxon_summaries = {name: cache.get(name) for name in names}
+    print_profile_stats(load_profiles(
+        {fam: check.checklist_species for fam, check in checks.items()},
+        reptiledb.release_of(checklist_path.name),
+        family_ranges,
+        taxon_summaries,
+    ))
 
     try:
         run_checks()

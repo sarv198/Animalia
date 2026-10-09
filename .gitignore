@@ -1,0 +1,6 @@
+# Each app has its own .gitignore; these cover the repository root.
+node_modules/
+*.log
+.env
+.DS_Store
+Thumbs.db

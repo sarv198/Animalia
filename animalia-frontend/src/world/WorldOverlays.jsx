@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { formatAge } from '../phylogenyLayout.js'
 import { STATUS } from '../phylogenyStyle.js'
 import { ageSummary, displayName, photoCredit } from '../phylo/labels.js'
+import { stepWhen, whenPhrase } from '../phylo/narrative.js'
 import { EXHIBIT_NAMES, familyCount, scaleTrail, searchWorld, specimenFact } from './worldModel.js'
 
 export function SearchBox({ world, onSelect }) {
@@ -126,8 +127,9 @@ export function TourBar({ caption, index, total, paused, onPrev, onNext, onPause
 }
 
 // Following a lineage back toward the root, one split at a time.
-export function FollowBar({ follow, onExit }) {
+export function FollowBar({ world, follow, onExit }) {
   const step = follow.steps[follow.index]
+  const stepNode = step ? world.nodes.get(step.id)?.node : null
   return (
     <div className="world-tour follow" role="region" aria-label="Follow lineage">
       <p className="tour-kicker">
@@ -137,7 +139,7 @@ export function FollowBar({ follow, onExit }) {
         <>
           <h2 key={step.id}>
             {step.title}
-            {step.age != null && <span> · about {formatAge(step.age)} million years ago</span>}
+            {step.age != null && <span> · {stepWhen(step.age, stepNode)}</span>}
           </h2>
           <p className="tour-line">Splits into: {step.parts.join('  |  ')}</p>
         </>
@@ -161,8 +163,8 @@ export function MuseumIntro({ world, onTour, onFree }) {
       <h1>Squamata</h1>
       {squamata && (
         <p className="museum-sub">
-          Lizards, snakes and amphisbaenians — {familyCount(squamata.node)} families in this tree, sharing a last
-          common ancestor about {formatAge(age)} million years ago.
+          Lizards, snakes and amphisbaenians: {familyCount(squamata.node)} families in this tree, all descended
+          from one ancestor that lived about {formatAge(age)} million years ago, {whenPhrase(age, squamata.node)}.
         </p>
       )}
       <p className="museum-hint">Height is time: the deepest branches are the oldest.</p>

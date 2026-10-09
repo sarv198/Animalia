@@ -41,6 +41,7 @@ class PhyloTreeNode(BaseModel):
     clade_group: str | None = None
     representative_species: RepresentativeSpecies | None = None
     placement_status: Literal["confirmed", "flagged", "unknown"] | None = None
+    species_count: int | None = None  # family tips: species in The Reptile Database
 
     extinct: bool = False
     placement_uncertain: bool = False
@@ -70,3 +71,51 @@ class PhyloTreeNode(BaseModel):
 
 
 PhyloTreeNode.model_rebuild()
+
+
+class TaxonText(BaseModel):
+    """A short description from Wikipedia, shown with its link and licence."""
+
+    text: str
+    title: str
+    url: str
+    licence: str
+    licence_url: str
+    # Where it lives; scope 'species' means the text describes the
+    # representative species (from range_title's article), not the whole group.
+    range_text: str | None = None
+    range_scope: Literal["group", "species"] | None = None
+    range_title: str | None = None
+    range_url: str | None = None
+
+
+class RangeMap(BaseModel):
+    """A range as GeoJSON (WGS84). level 'family' is the union of the
+    family's species ranges; 'species' is one species' range."""
+
+    level: Literal["family", "species"]
+    geojson: dict
+    scientific_name: str | None = None
+    species_mapped: int | None = None
+    species_total: int | None = None
+    source: str
+    citation: str
+
+
+class OccurrenceMap(BaseModel):
+    """Where GBIF has records of a species; used only when no range exists."""
+
+    gbif_taxon_key: int
+    scientific_name: str
+
+
+class NodeProfile(BaseModel):
+    """Extra detail for one named family, clade or group, fetched on click."""
+
+    name: str
+    summary: TaxonText | None = None
+    species_count: int | None = None
+    checklist_release: str | None = None
+    family_range: RangeMap | None = None
+    species_range: RangeMap | None = None
+    occurrences: OccurrenceMap | None = None

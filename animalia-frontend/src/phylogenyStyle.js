@@ -87,3 +87,18 @@ export const IUCN_LABELS = {
   EX: 'Extinct',
   DD: 'Data Deficient',
 }
+
+// IUCN categories on a warm-to-cool scale: the most threatened are red and
+// orange, the least concern cool blue. Text colour is chosen for contrast;
+// the category code and name are always shown beside the colour.
+export const IUCN_ORDER = ['LC', 'NT', 'VU', 'EN', 'CR', 'EW', 'EX']
+export const IUCN_COLORS = {
+  EX: { fill: '#5c1f33', ink: '#ece6d6' },
+  EW: { fill: '#8f2d4f', ink: '#ece6d6' },
+  CR: { fill: '#e04a3c', ink: '#13120f' },
+  EN: { fill: '#ee8a3c', ink: '#13120f' },
+  VU: { fill: '#e2b65a', ink: '#13120f' },
+  NT: { fill: '#67b7a4', ink: '#13120f' },
+  LC: { fill: '#5b9bd9', ink: '#13120f' },
+  DD: { fill: '#9a9282', ink: '#13120f' },
+}

@@ -2,7 +2,7 @@
 //
 // It draws what worldModel.js computes and never changes it: positions come
 // from the phylogeny (height = time, angle = branching order). The engine adds
-// presentation only — emphasis, labels, camera moves, subtle motion.
+// presentation only: emphasis, labels, camera moves, subtle motion.
 
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
@@ -17,6 +17,7 @@ const AMBER = new THREE.Color(0xe2b65a)
 const FAMILY_LABEL_DISTANCE = 190
 const PORTRAIT_DISTANCE = 85
 const NEAR_DISTANCE = 200 // time column recedes inside this
+const TOP_MARGIN = 40 // the scale trail sits along the top of the stage
 const MAX_PORTRAITS = 8
 const OPACITY = { 4: 1, 3: 0.95, 2: 0.62, 1: 0.26, 0: 0.06 }
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2)
@@ -362,9 +363,13 @@ export default class TreeWorld {
     common.textContent = species.common_name || ''
     const sci = document.createElement('em')
     sci.textContent = species.scientific_name
+    const family = document.createElement('span')
+    family.className = 'portrait-family'
+    const flag = STATUS[item.data.placement_status]
+    family.textContent = item.data.name + (flag ? ` ${flag.symbol}` : '')
     const credit = document.createElement('small')
     credit.textContent = `${image.creator || 'unknown'} · ${image.licence}`
-    caption.append(common, sci, credit)
+    caption.append(common, sci, family, credit)
     el.append(img, caption)
     const object = new CSS2DObject(el)
     object.position.set(item.pos[0], item.pos[1] + 13, item.pos[2])
@@ -540,6 +545,14 @@ export default class TreeWorld {
     })
   }
 
+  // How far back a sphere of this radius fits the view, on the narrower axis
+  // (portrait phones are narrower than they are tall).
+  fitDistance(radius) {
+    const vertical = THREE.MathUtils.degToRad(this.camera.fov) / 2
+    const horizontal = Math.atan(Math.tan(vertical) * this.camera.aspect)
+    return radius / Math.sin(Math.min(vertical, horizontal))
+  }
+
   // Frame a set of nodes, viewed from outside their sector and a little above.
   frameIds(ids, { duration, distanceScale = 1 } = {}) {
     const points = ids.map((id) => vec(this.world.nodes.get(id).pos))
@@ -550,9 +563,10 @@ export default class TreeWorld {
     if (outward.lengthSq() < 1) outward.set(0, 0, 1)
     outward.normalize()
     const dir = outward.multiplyScalar(0.88).add(new THREE.Vector3(0, 0.48, 0)).normalize()
-    const fov = THREE.MathUtils.degToRad(this.camera.fov)
-    const distance = (radius / Math.sin(fov / 2)) * 0.95 * distanceScale
-    return this.flyTo(center.clone().add(dir.multiplyScalar(distance)), center, duration)
+    const distance = this.fitDistance(radius) * 1.1 * distanceScale
+    // Aim a little low so the tips (and their labels) clear the top edge.
+    const aim = center.clone().add(new THREE.Vector3(0, radius * 0.12, 0))
+    return this.flyTo(aim.clone().add(dir.multiplyScalar(distance)), aim, duration)
   }
 
   focusNode(id, { duration } = {}) {
@@ -576,7 +590,7 @@ export default class TreeWorld {
       const points = ids.map((id) => vec(this.world.nodes.get(id).pos))
       const sphere = new THREE.Sphere().setFromPoints(points)
       this.controls.target.copy(sphere.center)
-      this.camera.position.copy(sphere.center).add(new THREE.Vector3(0, 0.55, 1).normalize().multiplyScalar(sphere.radius * 2.6))
+      this.camera.position.copy(sphere.center).add(new THREE.Vector3(0, 0.55, 1).normalize().multiplyScalar(this.fitDistance(sphere.radius) * 0.95))
       this.controls.update()
       return Promise.resolve()
     }
@@ -689,7 +703,6 @@ export default class TreeWorld {
       label.el.dataset.level = level != null ? level : this.levels && this.dimOthers ? 0 : 'n'
       candidates.push({ item, distance })
     }
-    this.declutterPlaques()
     // Portraits: the nearest few, plus whatever is hovered or selected.
     const wanted = new Set()
     candidates
@@ -706,8 +719,11 @@ export default class TreeWorld {
       if (portrait.object.visible !== show) {
         portrait.object.visible = show
         portrait.el.classList.toggle('visible', show)
+        // The portrait caption carries the family name meanwhile.
+        this.familyLabels.get(item.id)?.el.classList.toggle('with-portrait', show)
       }
     }
+    this.declutterLabels()
     if (this.callbacks.onScale) {
       const target = this.controls.target
       let nearest = null
@@ -729,36 +745,60 @@ export default class TreeWorld {
     }
   }
 
-  // Landmark plaques that would overlap on screen give way to broader or
-  // emphasised ones; they reappear as the camera moves in.
-  declutterPlaques() {
+  // Labels that would overlap on screen give way. Portraits first (hovered,
+  // then selected, then nearest), then family names, then landmark plaques
+  // (emphasised, then broader); hidden ones reappear as the camera moves.
+  declutterLabels() {
     const width = this.renderer.domElement.clientWidth
     const height = this.renderer.domElement.clientHeight
     if (!width || !height) return
-    // Portraits on show are obstacles too.
-    const stage = this.renderer.domElement.getBoundingClientRect()
-    const placed = [...this.portraits.values()]
-      .filter((portrait) => portrait.object.visible)
-      .map((portrait) => {
-        const r = portrait.el.getBoundingClientRect()
-        return { left: r.left - stage.left, right: r.right - stage.left, top: r.top - stage.top, bottom: r.bottom - stage.top }
-      })
+    const camera = this.camera.position
     const projected = new THREE.Vector3()
-    const ordered = [...this.cladeLabels.entries()].sort(([idA, a], [idB, b]) => {
+    const placed = []
+    const place = (object, el, pad, fallback) => {
+      object.getWorldPosition(projected).project(this.camera)
+      const x = (projected.x * 0.5 + 0.5) * width
+      const y = (-projected.y * 0.5 + 0.5) * height
+      const w = el.offsetWidth || fallback[0]
+      const h = el.offsetHeight || fallback[1]
+      const box = { left: x - w / 2 - pad, right: x + w / 2 + pad, top: y - h / 2 - pad / 2, bottom: y + h / 2 + pad / 2 }
+      const offStage = projected.z > 1 || box.top < TOP_MARGIN || box.bottom > height || box.left < 0 || box.right > width
+      const crowded = offStage || placed.some((o) => box.left < o.right && box.right > o.left && box.top < o.bottom && box.bottom > o.top)
+      if (!crowded) placed.push(box)
+      return crowded
+    }
+    const rank = (id) => (id === this.hoveredId ? 0 : this.levels?.get(id) === 4 ? 1 : 2)
+    const portraits = [...this.portraits.entries()]
+      .filter(([, portrait]) => portrait.object.visible)
+      .map(([id, portrait]) => ({ id, portrait, distance: camera.distanceTo(vec(this.world.nodes.get(id).pos)) }))
+      .sort((a, b) => rank(a.id) - rank(b.id) || a.distance - b.distance)
+    for (const { id, portrait } of portraits) {
+      // The hovered portrait always shows.
+      const crowded = place(portrait.object, portrait.el, 2, [110, 130]) && id !== this.hoveredId
+      portrait.el.classList.toggle('crowded', crowded)
+      this.familyLabels.get(id)?.el.classList.toggle('with-portrait', !crowded)
+    }
+    const families = this.tipItems
+      .map((item) => ({ item, label: this.familyLabels.get(item.id) }))
+      .filter(({ label }) => label.visible)
+      .map((entry) => ({ ...entry, distance: camera.distanceTo(vec(entry.item.pos)) }))
+      .sort((a, b) => (this.levels?.get(b.item.id) ?? -1) - (this.levels?.get(a.item.id) ?? -1) || a.distance - b.distance)
+    for (const { item, label } of families) {
+      // A name sitting under its own portrait is already clear of the others.
+      if (label.el.classList.contains('with-portrait')) {
+        label.el.classList.remove('crowded')
+        continue
+      }
+      const crowded = place(label.object, label.el, 3, [80, 16]) && item.id !== this.hoveredId
+      label.el.classList.toggle('crowded', crowded)
+    }
+    const plaques = [...this.cladeLabels.entries()].sort(([idA, a], [idB, b]) => {
       const la = this.levels?.get(idA) ?? -1
       const lb = this.levels?.get(idB) ?? -1
       return lb - la || a.nested - b.nested
     })
-    for (const [, label] of ordered) {
-      label.object.getWorldPosition(projected).project(this.camera)
-      const x = (projected.x * 0.5 + 0.5) * width
-      const y = (-projected.y * 0.5 + 0.5) * height
-      const w = label.el.offsetWidth || 120
-      const h = label.el.offsetHeight || 30
-      const box = { left: x - w / 2 - 4, right: x + w / 2 + 4, top: y - h / 2 - 2, bottom: y + h / 2 + 2 }
-      const offStage = projected.z > 1 || box.top < 0 || box.bottom > height || box.left < 0 || box.right > width
-      const crowded = offStage || placed.some((o) => box.left < o.right && box.right > o.left && box.top < o.bottom && box.bottom > o.top)
-      if (!crowded) placed.push(box)
+    for (const [, label] of plaques) {
+      const crowded = place(label.object, label.el, 4, [120, 30])
       if (crowded !== label.crowded) {
         label.crowded = crowded
         label.el.classList.toggle('crowded', crowded)

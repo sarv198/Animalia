@@ -50,7 +50,7 @@ export default function TimeLens({ rootAge, lensAge, playing, events, onPlay, on
             </p>
             {event && (
               <p className="lens-event" key={`${event.title}-${event.age}`}>
-                {!atPresent && <strong>{event.title} — </strong>}
+                {!atPresent && <strong>{event.title}: </strong>}
                 {event.text}
                 {event.age > 0 ? ` (~${formatAge(event.age)} Ma)` : ''}
               </p>

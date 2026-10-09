@@ -17,6 +17,10 @@ FOSSIL_DATES_PATH = CURATED_DIR / "fossil_dates.csv"
 FAMILY_OVERRIDES_PATH = CURATED_DIR / "family_status_overrides.csv"
 CLADE_NAMES_PATH = CURATED_DIR / "clade_names.csv"
 MEDIA_RAW_DIR = RAW_DIR / "media"
+# GARD 1.7 range polygons (Roll & Meiri 2022, Dryad, CC0). Dryad serves the
+# files only through its website, so they are downloaded by hand into here.
+GARD_RAW_DIR = RAW_DIR / "gard"
+GARD_DATASET_URL = "https://doi.org/10.5061/dryad.9cnp5hqmb"
 
 # Catalogue of Life / ChecklistBank (COL XR)
 COL_CHECKLISTBANK_BASE = "https://api.checklistbank.org"
