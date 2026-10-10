@@ -18,6 +18,19 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "animalia-frontend", "run", "dev", "--", "--port", "3000", "--strictPort"],
       "port": 3000
+    },
+    {
+      "name": "backend-5174",
+      "runtimeExecutable": "animalia-backend/.venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "app.main:app", "--reload", "--port", "8001", "--app-dir", "animalia-backend", "--reload-dir", "animalia-backend", "--env-file", "animalia-backend/.env"],
+      "env": { "CORS_ORIGINS": "http://localhost:5174,http://localhost:5173,http://localhost:3000" },
+      "port": 8001
+    },
+    {
+      "name": "frontend-5174",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "animalia-frontend", "run", "dev", "--", "--port", "5174", "--strictPort"],
+      "port": 5174
     }
   ]
 }

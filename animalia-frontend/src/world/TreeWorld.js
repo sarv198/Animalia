@@ -7,6 +7,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { CSS2DObject, CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js'
+import { photoUrl } from '../phylo/photos.js'
 import { MAJOR_DIVISIONS, PERIODS, STATUS } from '../phylogenyStyle.js'
 import { WORLD, exhibitName } from './worldModel.js'
 
@@ -356,7 +357,10 @@ export default class TreeWorld {
     img.alt = species.common_name || species.scientific_name
     img.loading = 'lazy'
     img.referrerPolicy = 'no-referrer'
-    img.src = image.thumbnail_url || image.url
+    img.decoding = 'async'
+    img.src = photoUrl(image, 'small')
+    // If the host does not deliver the photo, show the caption without it.
+    img.addEventListener('error', () => el.classList.add('no-photo'), { once: true })
     const caption = document.createElement('figcaption')
     const common = document.createElement('span')
     common.className = 'portrait-common'

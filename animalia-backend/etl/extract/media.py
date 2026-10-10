@@ -44,6 +44,9 @@ MAX_RETRIES = 6
 CACHE_FILE = "species_media.json"
 
 GBIF_IMAGES_PER_SPECIES = 3
+# Wikimedia's standard thumbnail widths; other widths are rendered on demand
+# and throttled.
+COMMONS_THUMB_WIDTHS = (120, 250, 330, 500, 960)
 IUCN_CATEGORIES = frozenset({"LC", "NT", "VU", "EN", "CR", "EW", "EX", "DD"})
 # Licences that allow showing a photo on a public site, with credit. The
 # non-commercial (NC) ones are allowed only while the site is non-commercial
@@ -174,31 +177,49 @@ def fetch_wikipedia(scientific_name: str) -> dict[str, Any] | None:
     }
 
 
-def fetch_commons_image(file_name: str) -> dict[str, Any] | None:
-    """Image URLs + licence + author for a Commons file; None if not on Commons
-    (e.g. a local non-free file) or not openly licensed."""
-    resp = _get(
-        COMMONS_API,
-        params={
-            "action": "query", "titles": f"File:{file_name}", "prop": "imageinfo",
-            "iiprop": "url|extmetadata", "iiurlwidth": 960,
-            "format": "json", "formatversion": 2,
-        },
-        headers=HEADERS,
-    )
-    pages = resp.json().get("query", {}).get("pages", [])
+def thumb_width(original_width: int | None, wanted: int) -> int:
+    """The largest standard thumbnail width up to ``wanted`` that is smaller
+    than the original. Asking for a width at or above the original makes
+    Wikimedia hand back the full original file, which it rate-limits when
+    linked from other sites (photos then fail to load)."""
+    fitting = [w for w in COMMONS_THUMB_WIDTHS if w <= wanted and (original_width is None or w < original_width)]
+    return fitting[-1] if fitting else COMMONS_THUMB_WIDTHS[0]
+
+
+def _commons_info(file_name: str, iiprop: str, width: int | None = None) -> dict[str, Any] | None:
+    params = {
+        "action": "query", "titles": f"File:{file_name}", "prop": "imageinfo",
+        "iiprop": iiprop, "format": "json", "formatversion": 2,
+    }
+    if width:
+        params["iiurlwidth"] = width
+    pages = _get(COMMONS_API, params=params, headers=HEADERS).json().get("query", {}).get("pages", [])
     if not pages or pages[0].get("missing") or not pages[0].get("imageinfo"):
         return None
-    info = pages[0]["imageinfo"][0]
+    return pages[0]["imageinfo"][0]
+
+
+def fetch_commons_image(file_name: str) -> dict[str, Any] | None:
+    """Image URLs + licence + author for a Commons file; None if not on Commons
+    (e.g. a local non-free file) or not openly licensed. Both URLs are scaled
+    copies at standard widths (up to 960px, and 500px for small slots)."""
+    info = _commons_info(file_name, "url|size|extmetadata")
+    if info is None:
+        return None
     meta = info.get("extmetadata", {})
     licence = _strip_html(meta.get("LicenseShortName", {}).get("value"))
     creator = _strip_html(meta.get("Artist", {}).get("value")) or _strip_html(meta.get("Credit", {}).get("value"))
     if not usable(licence, creator):
         return None
+    original_width = info.get("width")
+    urls = {}
+    for key, wanted in (("image_url", 960), ("thumbnail_url", 500)):
+        time.sleep(SLEEP_BETWEEN_CALLS)
+        scaled = _commons_info(file_name, "url", thumb_width(original_width, wanted)) or {}
+        urls[key] = scaled.get("thumburl") or info.get("url")
     return {
         "source": "Wikimedia Commons",
-        "image_url": info.get("thumburl") or info.get("url"),
-        "thumbnail_url": info.get("thumburl") or info.get("url"),
+        **urls,
         "page_url": info.get("descriptionurl"),
         "licence": licence,
         "licence_url": meta.get("LicenseUrl", {}).get("value"),

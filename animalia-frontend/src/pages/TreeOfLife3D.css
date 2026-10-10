@@ -1100,3 +1100,8 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* A portrait whose photo failed keeps its caption only */
+.world-portrait.no-photo img {
+  display: none;
+}

@@ -1,5 +1,6 @@
 import { STATUS } from '../phylogenyStyle.js'
 import { ageSummary, displayName, photoCredit } from './labels.js'
+import { photoUrl } from './photos.js'
 
 // The compact card that follows the pointer: the animal comes into focus for
 // families; clades and groups show their age.
@@ -17,7 +18,13 @@ export default function HoverCard({ node, x, y, stageWidth }) {
     >
       {image && (
         <div className="hover-photo">
-          <img src={image.thumbnail_url || image.url} alt="" referrerPolicy="no-referrer" />
+          <img
+            src={photoUrl(image, 'small')}
+            alt=""
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={(event) => { event.currentTarget.style.visibility = 'hidden' }}
+          />
         </div>
       )}
       <div className="hover-text">

@@ -167,3 +167,30 @@ def test_non_commercial_photos_can_be_switched_off(monkeypatch) -> None:
     assert media.usable("CC BY-NC 4.0", "Ann")  # allowed for this non-commercial site
     monkeypatch.setattr(media, "ALLOWED_LICENCES", media.ALLOWED_LICENCES - {"CC BY-NC", "CC BY-NC-SA"})
     assert not media.usable("CC BY-NC 4.0", "Ann")
+
+
+def test_thumb_width_is_standard_and_below_the_original() -> None:
+    assert media.thumb_width(4000, 960) == 960
+    assert media.thumb_width(909, 960) == 500  # 960 would return the original file
+    assert media.thumb_width(960, 960) == 500
+    assert media.thumb_width(300, 500) == 250
+    assert media.thumb_width(None, 500) == 500
+
+
+def test_commons_image_asks_for_scaled_copies(monkeypatch) -> None:
+    widths = []
+
+    def fake_get(url, params, headers=None):
+        widths.append(params.get("iiurlwidth"))
+        width = params.get("iiurlwidth")
+        return FakeResponse(200, {"query": {"pages": [{"imageinfo": [{
+            "url": "https://upload/orig.png", "width": 909, "descriptionurl": "https://commons/x",
+            "thumburl": f"https://thumb/{width}px-x.png" if width else None,
+            "extmetadata": {"LicenseShortName": {"value": "CC BY 4.0"}, "Artist": {"value": "Ann"}},
+        }]}]}})
+
+    monkeypatch.setattr(media, "_get", fake_get)
+    monkeypatch.setattr(media.time, "sleep", lambda s: None)
+    image = media.fetch_commons_image("x.png")
+    assert widths == [None, 500, 500]
+    assert image["image_url"] == "https://thumb/500px-x.png" == image["thumbnail_url"]

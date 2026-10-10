@@ -103,7 +103,7 @@ export default function RangeMap({ profile, familyName, species }) {
 
   return (
     <section className="card-section range-section">
-      <h3>Where it lives</h3>
+      <h3>Range</h3>
       {options.length > 1 && (
         <div className="range-toggle" role="group" aria-label="Map shows">
           {options.map((o) => (

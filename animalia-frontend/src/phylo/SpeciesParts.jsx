@@ -2,20 +2,30 @@
 import { useState } from 'react'
 import { IUCN_COLORS, IUCN_LABELS, IUCN_ORDER, STATUS } from '../phylogenyStyle.js'
 import { speciesCountLine } from './narrative.js'
+import { photoSrcSet, photoUrl } from './photos.js'
 import './shared.css'
 
 export function SpeciesPhotos({ species }) {
   const [index, setIndex] = useState(0)
-  const images = species.images || []
-  const image = images[index]
+  const [failed, setFailed] = useState(() => new Set())
+  // A photo whose host does not deliver it is dropped; the next one shows.
+  const images = (species.images || []).filter((img) => !failed.has(img.url))
+  const image = images[Math.min(index, images.length - 1)]
+  const drop = (url) => setFailed((current) => new Set(current).add(url))
   if (!image) return <p className="card-muted card-nophoto">No openly licensed photo found.</p>
   return (
     <figure className="card-photo">
       <a href={image.page_url || image.url} target="_blank" rel="noreferrer">
         <img
-          src={image.url}
+          key={image.url}
+          src={photoUrl(image, 'medium')}
+          srcSet={photoSrcSet(image)}
+          sizes="(max-width: 960px) 100vw, 440px"
+          fetchPriority="high"
+          decoding="async"
           alt={`${species.scientific_name}${species.common_name ? ` (${species.common_name})` : ''}`}
           referrerPolicy="no-referrer"
+          onError={() => drop(image.url)}
         />
       </a>
       <figcaption>
@@ -39,11 +49,18 @@ export function SpeciesPhotos({ species }) {
               key={img.url}
               type="button"
               role="listitem"
-              className={i === index ? 'thumb active' : 'thumb'}
+              className={img === image ? 'thumb active' : 'thumb'}
               onClick={() => setIndex(i)}
               aria-label={`Photo ${i + 1} of ${images.length}`}
             >
-              <img src={img.thumbnail_url || img.url} alt="" loading="lazy" referrerPolicy="no-referrer" />
+              <img
+                src={photoUrl(img, 'small')}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                referrerPolicy="no-referrer"
+                onError={() => drop(img.url)}
+              />
             </button>
           ))}
         </div>
@@ -52,29 +69,25 @@ export function SpeciesPhotos({ species }) {
   )
 }
 
+// Shown only when the species has a listed category.
 export function Conservation({ species }) {
+  if (!species.iucn_category) return null
   return (
     <section className="card-section">
       <h3>Conservation status</h3>
-      {species.iucn_category ? (
-        <>
-          <p>
-            <IucnPill category={species.iucn_category} /> {IUCN_LABELS[species.iucn_category]}
-          </p>
-          <IucnScale category={species.iucn_category} />
-          <p className="card-source">
-            IUCN Red List category as listed on{' '}
-            {species.wikipedia_url ? (
-              <a href={species.wikipedia_url} target="_blank" rel="noreferrer">Wikipedia</a>
-            ) : (
-              'Wikipedia'
-            )}
-            {species.iucn_assessment_year ? ` (assessment ${species.iucn_assessment_year})` : ''}.
-          </p>
-        </>
-      ) : (
-        <p className="card-muted">Not listed on Wikipedia.</p>
-      )}
+      <p>
+        <IucnPill category={species.iucn_category} /> {IUCN_LABELS[species.iucn_category]}
+      </p>
+      <IucnScale category={species.iucn_category} />
+      <p className="card-source">
+        IUCN Red List category as listed on{' '}
+        {species.wikipedia_url ? (
+          <a href={species.wikipedia_url} target="_blank" rel="noreferrer">Wikipedia</a>
+        ) : (
+          'Wikipedia'
+        )}
+        {species.iucn_assessment_year ? ` (assessment ${species.iucn_assessment_year})` : ''}.
+      </p>
     </section>
   )
 }
@@ -172,7 +185,7 @@ export function WikiSummary({ summary, heading = 'About this group' }) {
       {summary.range_text && (
         <p className="wiki-range">
           <span className="wiki-range-label">
-            {summary.range_scope === 'species' ? `Where the ${summary.range_title} lives` : 'Where it lives'}
+            {summary.range_scope === 'species' ? `Range (${summary.range_title})` : 'Range'}
           </span>{' '}
           {summary.range_text}
         </p>

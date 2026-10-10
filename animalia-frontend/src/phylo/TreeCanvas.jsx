@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import * as d3 from 'd3'
+import { photoUrl } from './photos.js'
 import {
   MARGIN,
   ROW,
@@ -475,7 +476,7 @@ export default function TreeCanvas({
                           <g className="tip-photo">
                             <circle r={19} className="tip-photo-ring" stroke={model.color.get(d.id)} />
                             <image
-                              href={image.thumbnail_url || image.url}
+                              href={photoUrl(image, 'small')}
                               x={-17}
                               y={-17}
                               width={34}
