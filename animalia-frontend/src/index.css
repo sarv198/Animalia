@@ -18,14 +18,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 2.5rem;
-  background: #0e1013;
-  border-bottom: 1px solid #2a2e35;
+  padding: 0.6rem 2.5rem;
+  background: #000;
 }
 
-.nav-title {
-  font-weight: 650;
-  letter-spacing: 0.03em;
+.nav-logo {
+  display: block;
+  height: 46px;
+  width: auto;
 }
 
 .nav-links {
