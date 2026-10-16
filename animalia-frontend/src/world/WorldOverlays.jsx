@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { formatAge } from '../phylogenyLayout.js'
 import { STATUS } from '../phylogenyStyle.js'
 import { ageSummary, displayName, photoCredit } from '../phylo/labels.js'
+import { isReptileDatabaseFamily } from '../phylo/reptileDatabase.js'
 import { stepWhen, whenPhrase } from '../phylo/narrative.js'
 import { EXHIBIT_NAMES, familyCount, scaleTrail, searchWorld, specimenFact } from './worldModel.js'
 
@@ -92,6 +93,7 @@ export function DiscoveryChip({ world, hover, museum, stageWidth }) {
               {STATUS[d.placement_status].symbol} {STATUS[d.placement_status].label}
             </p>
           )}
+          {isReptileDatabaseFamily(d) && <p className="rd-line">Reptile Database family</p>}
           {fact && <p className="chip-fact">{fact}</p>}
           {species?.image && <p className="chip-credit">{photoCredit(species.image)}</p>}
           <p className="chip-hint">Click to explore its relatives →</p>

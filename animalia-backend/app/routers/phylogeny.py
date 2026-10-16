@@ -50,6 +50,7 @@ def _to_schema(node: PhyloNode, species_counts: dict[str, int] | None = None) ->
             else None
         ),
         placement_status=node.placement_status,
+        opentree_family=node.opentree_family,
         species_count=(species_counts or {}).get(node.label) if species else None,
         extinct=node.extinct,
         placement_uncertain=node.placement_uncertain,

@@ -5,7 +5,9 @@ import { ageRange, dateSource, displayName } from './labels.js'
 import { cladeStory, familyStory } from './narrative.js'
 // Range maps are hidden for now; the component is kept for later.
 // import RangeMap from './RangeMap.jsx'
-import { Conservation, Placement, SpeciesCount, SpeciesLinks, SpeciesPhotos, WikiSummary } from './SpeciesParts.jsx'
+import {
+  Conservation, Placement, ReptileDatabaseChip, SpeciesCount, SpeciesLinks, SpeciesPhotos, WikiSummary,
+} from './SpeciesParts.jsx'
 import { useProfile } from './useProfile.js'
 import { useSpecies } from './useSpecies.js'
 
@@ -77,6 +79,7 @@ function FamilyHead({ node, kind, species, state }) {
           <em>{d.representative_species?.scientific_name}</em>
           <span className="card-role">, the representative species of {d.name}</span>
         </p>
+        <ReptileDatabaseChip data={d} />
       </header>
       {state === 'loading' && <p className="card-muted">Loading species…</p>}
       {state === 'error' && <p className="phylo-error">Could not load this species.</p>}

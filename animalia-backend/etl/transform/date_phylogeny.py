@@ -364,25 +364,32 @@ def date_records(
 
 
 def _discard_weaker_timetree_conflicts(tree: _Tree, report: DatingReport) -> None:
-    """Repeatedly find TimeTree nodes older than their nearest dated TimeTree
-    ancestor, with confidence intervals that do not overlap, and discard
-    whichever of the two has fewer supporting studies (the descendant on a
-    tie). The worst clash is resolved first. Overlapping clashes are left for
-    the raise pass: the two estimates agree within their uncertainty."""
+    """Repeatedly find TimeTree nodes older than a TimeTree-dated ancestor,
+    with confidence intervals that do not overlap, and discard whichever of
+    the two has fewer supporting studies (the descendant on a tie). Every
+    dated ancestor is compared, not only the nearest: a weak estimate can sit
+    inside its parent's wide interval yet far outside a better-supported
+    grandparent's. The worst clash is resolved first. Overlapping clashes are
+    left for the raise pass: the estimates agree within their uncertainty."""
+
+    def interval(rec: PhyloRecord) -> tuple[float, float]:
+        # A missing or degenerate interval (TimeTree reports 0-0 for a
+        # single study) is just the point estimate, not "any age".
+        low, high = rec.age_ci_low, rec.age_ci_high
+        if low is None or high is None or not low <= rec.age_ma <= high:
+            return rec.age_ma, rec.age_ma
+        return low, high
 
     def intervals_overlap(young: PhyloRecord, old: PhyloRecord) -> bool:
-        if young.age_ci_low is None or old.age_ci_high is None:
-            return False
-        return young.age_ci_low <= old.age_ci_high
+        return interval(young)[0] <= interval(old)[1]
 
-    def nearest_dated_ancestor(key: str) -> PhyloRecord | None:
+    def dated_ancestors(key: str):
         parent = tree.by_key[key].parent_key
         while parent is not None:
             rec = tree.by_key[parent]
             if rec.age_ma is not None:
-                return rec
+                yield rec
             parent = rec.parent_key
-        return None
 
     while True:
         worst: tuple[float, PhyloRecord, PhyloRecord] | None = None
@@ -390,14 +397,14 @@ def _discard_weaker_timetree_conflicts(tree: _Tree, report: DatingReport) -> Non
             rec = tree.by_key[key]
             if rec.age_source != AGE_TIMETREE:
                 continue
-            anc = nearest_dated_ancestor(key)
-            if anc is None or anc.age_source != AGE_TIMETREE or rec.age_ma <= anc.age_ma:
-                continue
-            if intervals_overlap(rec, anc):
-                continue
-            gap = rec.age_ma - anc.age_ma
-            if worst is None or gap > worst[0]:
-                worst = (gap, rec, anc)
+            for anc in dated_ancestors(key):
+                if anc.age_source != AGE_TIMETREE or rec.age_ma <= anc.age_ma:
+                    continue
+                if intervals_overlap(rec, anc):
+                    continue
+                gap = rec.age_ma - anc.age_ma
+                if worst is None or gap > worst[0]:
+                    worst = (gap, rec, anc)
         if worst is None:
             return
         _, child, anc = worst

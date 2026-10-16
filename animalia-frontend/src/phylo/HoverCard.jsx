@@ -1,5 +1,6 @@
 import { STATUS } from '../phylogenyStyle.js'
 import { ageSummary, displayName, photoCredit } from './labels.js'
+import { isReptileDatabaseFamily } from './reptileDatabase.js'
 import { photoUrl } from './photos.js'
 
 // The compact card that follows the pointer: the animal comes into focus for
@@ -38,6 +39,7 @@ export default function HoverCard({ node, x, y, stageWidth }) {
             {flag.symbol} {flag.label}
           </p>
         )}
+        {isReptileDatabaseFamily(d) && <p className="rd-line">Reptile Database family</p>}
         {image && <p className="hover-credit">{photoCredit(image)}</p>}
         <p className="hover-hint">Click to explore</p>
       </div>

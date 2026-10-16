@@ -284,7 +284,7 @@ def fake_node(node_id, label, species=None, family=None, group=False, age=None):
     return SimpleNamespace(
         id=node_id, label=label, species_id=species.id if species else None, species=species,
         family_taxon=family, collapsed_group=group, external_id=None, source=None,
-        placement_status="confirmed" if species else None, extinct=False,
+        placement_status="confirmed" if species else None, opentree_family="family" if species else None, extinct=False,
         placement_uncertain=False, anapsid_skull=False, note=None, citation=None,
         age_ma=age, age_ci_low=None, age_ci_high=None, age_source=None, age_citation=None,
         age_study_count=None, age_adjusted=False, age_unadjusted_ma=None,
@@ -349,3 +349,28 @@ def test_real_clade_names_file_is_valid() -> None:
     for name in names:
         assert {name.family_a, name.family_b} <= families, name.name
         assert name.citation
+
+
+# --------------------------------------------------------------------------- #
+# Open Tree standing of a family name
+# --------------------------------------------------------------------------- #
+
+
+def _tnrs(name, *matches):
+    return {"name": name, "matches": [
+        {"score": 1.0, "is_synonym": syn, "taxon": {"name": tname, "unique_name": tname, "rank": rank, "flags": flags, "ott_id": 1}}
+        for tname, rank, syn, flags in matches
+    ]}
+
+
+def test_family_standing_covers_open_tree_cases():
+    from etl.extract.opentree import family_standing
+
+    assert family_standing(_tnrs("Varanidae", ("Varanidae", "family", False, []))) == "family"
+    # Spelling variant kept as a synonym of the same group still counts.
+    assert family_standing(_tnrs("Bolyeriidae", ("Bolyeridae", "family", True, []))) == "family"
+    # Listed, but Open Tree files no species under it.
+    assert family_standing(_tnrs("Xenophidiidae", ("Xenophidiidae", "family", False, ["barren", "merged"]))) == "empty"
+    # The name exists without family rank.
+    assert family_standing(_tnrs("Anolidae", ("Anolidae", "no rank", False, []))) == "unranked"
+    assert family_standing(_tnrs("Psammophiidae")) == "missing"

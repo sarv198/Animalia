@@ -249,6 +249,21 @@ def test_clear_conflict_discards_the_weaker_ancestor() -> None:
     _check_monotone(records)
 
 
+def test_weak_estimate_is_checked_against_every_dated_ancestor() -> None:
+    # The real case: a one-study TimeTree estimate with no interval (0-0) sits
+    # inside its parent's wide interval but far outside a better-supported
+    # grandparent's. It must be discarded, not used to raise both ancestors.
+    answers = dict(CONSISTENT)
+    answers[(40, 50)] = (190.0, 0.0, 0.0, 1)        # Varanidae + Pythonidae: weak, no interval
+    answers[(20, 40)] = (170.0, 150.0, 195.0, 7)    # Episquamata: wide interval holds 190
+    answers[(20, 30)] = (175.0, 172.0, 178.0, 9)    # Squamata: narrow, 190 is far outside
+    records, report, by, _ = dated(answers)
+    assert [age for _, age in report.discarded] == [190.0]
+    assert by["Squamata"].age_ma == 175.0 and not by["Squamata"].age_adjusted
+    assert by["Episquamata"].age_ma == 170.0 and not by["Episquamata"].age_adjusted  # not raised to 190
+    _check_monotone(records)
+
+
 def test_fossil_minimum_is_raised_rather_than_contradicting_molecules() -> None:
     answers = dict(CONSISTENT)
     answers[(10, 60)] = (330.0, 320.0, 340.0, 30)  # Sauria older than Reptilia's fossil minimum

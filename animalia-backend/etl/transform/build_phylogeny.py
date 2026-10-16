@@ -98,6 +98,7 @@ class PhyloRecord:
     family: str | None = None
     family_ott_id: int | None = None
     placement_status: str | None = None
+    opentree_family: str | None = None
     extinct: bool = False
     collapsed_group: bool = False
     placement_uncertain: bool = False
@@ -174,6 +175,8 @@ class FamilyPlacement:
     ott_id: int | None
     status: str
     note: str | None = None
+    # How Open Tree's taxonomy holds the family name (opentree.family_standing).
+    opentree_family: str | None = None
 
 
 _UNPLACED = FamilyPlacement(ott_id=None, status=STATUS_UNKNOWN)
@@ -402,6 +405,7 @@ def assemble(
                     family=family,
                     family_ott_id=placed.ott_id,
                     placement_status=placed.status,
+                    opentree_family=placed.opentree_family,
                     note=placed.note,
                 )
             )

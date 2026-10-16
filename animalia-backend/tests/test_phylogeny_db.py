@@ -66,7 +66,7 @@ def test_root_and_tip_counts(tree) -> None:
     families = [n for n in nodes if n["kind"] == "family"]
     groups = {n["name"] for n in nodes if n["kind"] == "group"}
     with (ROOT / "species_crossref.csv").open(newline="", encoding="utf-8-sig") as handle:
-        assert len(families) == len(list(csv.DictReader(handle))) == 85
+        assert len(families) == len(list(csv.DictReader(handle))) == 93
     assert groups == {"Mesosauria", "Pterosauria", "Ornithischia", "Sauropodomorpha", "Aves"}
 
 
@@ -197,7 +197,7 @@ def test_classification_tree_has_no_stale_families() -> None:
     clades = client.get("/api/tree/reptiles").json()
     names = {f["name"] for clade in clades for f in clade["children"]}
     assert "Anolidae" in names and "Dactyloidae" not in names and "Anniellidae" not in names
-    assert len(names) == 85
+    assert len(names) == 93
 
 
 def test_loader_prunes_species_that_left_the_csv() -> None:

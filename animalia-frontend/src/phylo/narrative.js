@@ -153,10 +153,11 @@ function years(age) {
 }
 
 // A family, told through its animal and its history.
-// "Bipedidae family contains 3 living species." (The Reptile Database count.)
+// "Bipedidae family contains 3 recognized species." The Reptile Database count,
+// which includes a few recently extinct species, so it does not say "living".
 export function speciesCountLine(data) {
   if (!data.species_count) return null
-  return `${data.name} family contains ${data.species_count.toLocaleString()} living species.`
+  return `${data.name} family contains ${data.species_count.toLocaleString()} recognized species.`
 }
 
 export function familyStory(node) {

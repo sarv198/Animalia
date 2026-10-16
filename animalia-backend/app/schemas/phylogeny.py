@@ -42,6 +42,8 @@ class PhyloTreeNode(BaseModel):
     representative_species: RepresentativeSpecies | None = None
     placement_status: Literal["confirmed", "flagged", "unknown"] | None = None
     species_count: int | None = None  # family tips: species in The Reptile Database
+    # family tips: how Open Tree's taxonomy holds the family name
+    opentree_family: Literal["family", "empty", "unranked", "missing"] | None = None
 
     extinct: bool = False
     placement_uncertain: bool = False

@@ -107,6 +107,7 @@ def load(build: PhylogenyBuild, timetree_version: str | None = None) -> PhyloLoa
                 family_taxon=family,
                 family_ott_id=rec.family_ott_id,
                 placement_status=rec.placement_status,
+                opentree_family=rec.opentree_family,
                 extinct=rec.extinct,
                 collapsed_group=rec.collapsed_group,
                 placement_uncertain=rec.placement_uncertain,

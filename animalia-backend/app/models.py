@@ -173,6 +173,10 @@ class PhyloNode(Base):
     family_taxon_id: Mapped[int | None] = mapped_column(ForeignKey("taxa.id"), index=True)
     family_ott_id: Mapped[int | None] = mapped_column()
     placement_status: Mapped[str | None] = mapped_column(String(20))  # confirmed | flagged | unknown
+    # How Open Tree's taxonomy holds the family name: family | empty | unranked
+    # | missing. Anything but "family" means the family follows The Reptile
+    # Database only (its species are still placed by Open Tree's tree).
+    opentree_family: Mapped[str | None] = mapped_column(String(20))
 
     # --- curated annotations ---
     extinct: Mapped[bool] = mapped_column(Boolean, server_default=false())

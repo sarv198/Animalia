@@ -5,7 +5,9 @@ import { ageRange, dateSource, displayName } from '../phylo/labels.js'
 import { cladeStory, familyStory, pairStory } from '../phylo/narrative.js'
 // Range maps are hidden for now; the component is kept for later.
 // import RangeMap from '../phylo/RangeMap.jsx'
-import { Conservation, Placement, SpeciesCount, SpeciesLinks, SpeciesPhotos, WikiSummary } from '../phylo/SpeciesParts.jsx'
+import {
+  Conservation, Placement, ReptileDatabaseChip, SpeciesCount, SpeciesLinks, SpeciesPhotos, WikiSummary,
+} from '../phylo/SpeciesParts.jsx'
 import { useProfile } from '../phylo/useProfile.js'
 import { useSpecies } from '../phylo/useSpecies.js'
 import { EXHIBIT_NAMES, comparison, describe, familyCount, neighbourhood } from './worldModel.js'
@@ -39,6 +41,7 @@ export function SelectionCard({ world, id, museum, onSelect, onFollow, onCompare
             <p className="world-sci">
               <em>{d.representative_species?.scientific_name}</em>, the representative species of <strong>{d.name}</strong>
             </p>
+            <ReptileDatabaseChip data={d} />
           </>
         ) : (
           <h2>

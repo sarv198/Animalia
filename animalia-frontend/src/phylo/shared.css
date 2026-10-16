@@ -217,3 +217,29 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+
+/* A family that follows The Reptile Database rather than Open Tree's taxonomy */
+.rd-chip {
+  display: inline-block;
+  margin-top: 0.35rem;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid rgba(130, 180, 236, 0.5);
+  border-radius: 999px;
+  color: #82b4ec;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.rd-note {
+  margin-top: 0.45rem;
+  color: var(--phylo-limestone);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.rd-line {
+  color: #82b4ec;
+  font-size: 0.72rem;
+  font-weight: 600;
+}

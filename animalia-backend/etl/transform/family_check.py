@@ -51,6 +51,7 @@ from etl.extract.opentree import (
     GROUP_SUBTREES_FILE,
     PublishedTrees,
     best_family_match,
+    family_standing,
     read_crossref,
 )
 from etl.transform import newick
@@ -370,12 +371,14 @@ def run(
                 " Its representative species is in no published tree in Open Tree, "
                 "so its position comes from taxonomy alone."
             )
-    family_ott = {
-        r["name"]: (best_family_match(r) or {}).get("ott_id")
-        for r in _read_json(raw_dir / FAMILY_TNRS_FILE).get("results", [])
-    }
+    family_results = _read_json(raw_dir / FAMILY_TNRS_FILE).get("results", [])
+    family_ott = {r["name"]: (best_family_match(r) or {}).get("ott_id") for r in family_results}
+    standing = {r["name"]: family_standing(r) for r in family_results}
     placement = {
-        fam: FamilyPlacement(ott_id=family_ott.get(fam), status=c.status, note=c.note)
+        fam: FamilyPlacement(
+            ott_id=family_ott.get(fam), status=c.status, note=c.note,
+            opentree_family=standing.get(fam, "missing"),
+        )
         for fam, c in checks.items()
     }
     return placement, checks, stale

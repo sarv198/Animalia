@@ -104,8 +104,9 @@ def family_names(rows: list[dict[str, str]]) -> list[str]:
 
 
 def _family_stem(name: str) -> str | None:
-    """'Crotaphytidae' and 'Crotaphytinae' both -> 'Crotaphyt'."""
-    for suffix in ("idae", "inae"):
+    """'Crotaphytidae' and 'Crotaphytinae' both -> 'Crotaphyt'. The '-iidae'
+    and '-idae' spellings of one name (Bolyeriidae, Bolyeridae) share a stem."""
+    for suffix in ("iidae", "iinae", "idae", "inae"):
         if name.endswith(suffix):
             return name[: -len(suffix)]
     return None
@@ -134,6 +135,24 @@ def best_family_match(result: dict[str, Any]) -> dict[str, Any] | None:
         ):
             return taxon
     return None
+
+
+# How Open Tree's taxonomy holds one of our family names:
+#   family    a family-rank taxon with species in it (or the same group at
+#             another rank, see best_family_match)
+#   empty     a family-rank taxon with no species filed under it ("barren")
+#   unranked  the name exists but not with family rank
+#   missing   no taxon of that name
+OPENTREE_FAMILY_STANDINGS = ("family", "empty", "unranked", "missing")
+
+
+def family_standing(result: dict[str, Any]) -> str:
+    """Our family name's standing in Open Tree's taxonomy (see above)."""
+    taxon = best_family_match(result)
+    if taxon is not None:
+        return "empty" if "barren" in (taxon.get("flags") or []) else "family"
+    exact = [m for m in result.get("matches", []) if m.get("score") == 1.0 and not m.get("is_synonym")]
+    return "unranked" if exact else "missing"
 
 
 def fetch_about() -> dict[str, Any]:

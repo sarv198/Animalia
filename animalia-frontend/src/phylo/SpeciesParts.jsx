@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { IUCN_COLORS, IUCN_LABELS, IUCN_ORDER, STATUS } from '../phylogenyStyle.js'
 import { speciesCountLine } from './narrative.js'
 import { photoSrcSet, photoUrl } from './photos.js'
+import { OPENTREE_STANDING, isReptileDatabaseFamily } from './reptileDatabase.js'
 import './shared.css'
 
 export function SpeciesPhotos({ species }) {
@@ -128,6 +129,7 @@ export function Placement({ data }) {
         )}
       </p>
       {data.note && <p className="card-note">{data.note}</p>}
+      <ReptileDatabaseNote data={data} />
     </section>
   )
 }
@@ -203,5 +205,24 @@ export function WikiSummary({ summary, heading = 'About this group' }) {
         <a href={summary.licence_url} target="_blank" rel="noreferrer">{summary.licence}</a>
       </p>
     </section>
+  )
+}
+
+export function ReptileDatabaseChip({ data }) {
+  if (!isReptileDatabaseFamily(data)) return null
+  return (
+    <span className="rd-chip" title={`${OPENTREE_STANDING[data.opentree_family]} Recognized as a family by The Reptile Database.`}>
+      Reptile Database family
+    </span>
+  )
+}
+
+export function ReptileDatabaseNote({ data }) {
+  if (!isReptileDatabaseFamily(data)) return null
+  return (
+    <p className="rd-note">
+      {OPENTREE_STANDING[data.opentree_family]} It is recognized as a family by The Reptile Database; its species
+      are placed in the tree by Open Tree.
+    </p>
   )
 }
